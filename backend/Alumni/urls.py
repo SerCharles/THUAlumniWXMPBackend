@@ -51,5 +51,9 @@ urlpatterns = [
     url(r'^joinActivity$', RequestHandler.JoinActivity),
     url(r'^modifyActivity$', RequestHandler.ChangeActivity),
     url(r'^getAllActivity$', RequestHandler.GetActivityList),
+    url(r'^getUserInfo$', RequestHandler.QueryUser),
+    url(r'^getActivityInfo$', RequestHandler.QueryActivity),
+    url(r'^deleteUser$', RequestHandler.DeleteUser),
+    url(r'^deleteActivity$', RequestHandler.DeleteActivity),
 
 ]

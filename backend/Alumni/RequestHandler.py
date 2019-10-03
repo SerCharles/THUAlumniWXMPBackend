@@ -105,26 +105,170 @@ def ChangeUser(request):
                 Return["error"] = "未登录"
         except:
             Success = False
-    print(Success)
+    #print(Success)
 
 
     #调用数据库函数修改信息
     if Success:
         try:
             Info = DatabaseManager.ChangeUser(OpenID, Name, Gender, Flag, Education)
-            print(Info)
+            #print(Info)
             if Info["Success"] == False:
                 Success = False
             else:
                 Return["id"] = OpenID
         except:
             Success = False
-    print(Success)
+    #print(Success)
     if Success == False and (not Return["error"]):
         try:
             Return["error"] = Info["Reason"]
         except:
             Return["error"] = "others"
+    Response = JsonResponse(Return)
+    if Success == True:
+        Response.status_code = 200
+    else:
+        Response.status_code = 400
+    return Response
+
+def QueryUser(request):
+    '''
+    描述：处理查询用户信息请求
+    参数：request
+    GET getUserInfo?userWechatId=(String)    
+    成功返回：
+    {
+    "name": "小明",
+    "gender": "male | female | other",
+    "flag":"invalid",
+    "education": [
+    {
+        "type": "undergraduate | master | doctor",
+        "id": 2013010253,
+        "start": 2013,
+        "end": 2017,
+        "departmentId": 00210,
+        "department": "清华大学软件学院"
+        "class": "软81"
+    },
+    {
+        "type": "master",
+        "id": 2017011210,
+        "start": 2017,
+        "end": null,
+        "departmentId": 00207,
+        "department": "清华大学精仪系"
+        "class": "软81"
+    }
+    ]
+    }
+    失败返回：
+    {
+        “error”："原因"
+    }
+    '''
+    Success = True
+    Return = {}
+
+    #print(request.POST)
+    #获取请求数据
+    if Success:
+        try:
+            OpenID = request.GET.get("userWechatId")
+            #print(OpenID, Name, Place, Start, End, MaxUser)
+        except:
+            Success = False
+    #print(OpenID,Name,Gender,Flag,Education)
+    #print(request)
+
+    #判断是否登录
+    if Success:
+        try:
+            Info = DatabaseManager.QueryUser(OpenID)
+            if not Info:
+                Success = False
+                Return["error"] = "未登录"
+        except:
+            Success = False
+    #print(Success)
+
+
+    #调用数据库函数修改信息
+    if Success:
+        try:
+            Info = DatabaseManager.QueryUser(OpenID)
+            #print(Info)
+            if not Info:
+                Success = False
+        except:
+            Success = False
+
+    #print(Success)
+    if Success == False and ("error" not in Return.keys()):
+        Return["error"] = "others"
+    if Success == True:
+        Return = Info
+
+    Response = JsonResponse(Return)
+    if Success == True:
+        Response.status_code = 200
+    else:
+        Response.status_code = 400
+    return Response
+
+def DeleteUser(request):
+    '''
+    描述：处理删除用户信息请求
+    参数：request
+    POST deleteUser?userWechatId=(String)   
+    成功返回：{}
+    
+    失败返回：
+    {
+        “error”："原因"
+    }
+    似乎有问题，可能不会用这个接口
+    '''
+    Success = True
+    Return = {}
+
+    #print(request.POST)
+    if Success:
+        try:
+            OpenID = request.GET.get("userWechatId")
+            #print(OpenID, Name, Place, Start, End, MaxUser)
+        except:
+            Success = False
+    #print(OpenID,Name,Gender,Flag,Education)
+    #print(request)
+
+    #判断是否登录
+    if Success:
+        try:
+            Info = DatabaseManager.QueryUser(OpenID)
+            if not Info:
+                Success = False
+                Return["error"] = "未登录"
+        except:
+            Success = False
+    #print(Success)
+
+
+    #调用数据库函数修改信息
+    if Success:
+        try:
+            Info = DatabaseManager.DeleteUser(OpenID)
+            #print(Info)
+            if Info == False:
+                Success = False
+        except:
+            Success = False
+
+    #print(Success)
+    if Success == False and ("error" not in Return.keys()):
+        Return["error"] = "others"
+
     Response = JsonResponse(Return)
     if Success == True:
         Response.status_code = 200
@@ -258,7 +402,7 @@ def JoinActivity(request):
                 Return["errmsg"] = Info["Reason"]
         except:
             Success = False
-    if Success == False and (not Return["errmsg"]):
+    if Success == False and ("errmsg" not in Return.keys()):
         Return["errmsg"] = "other"
 
     Response = JsonResponse(Return)
@@ -335,7 +479,7 @@ def ChangeActivity(request):
         except:
             Success = False
     
-    if Success == False and (not Return["errmsg"]):
+    if Success == False and ("errmsg" not in Return.keys()):
         Return["errmsg"] = "other"
     
     if Success == True:
@@ -405,3 +549,142 @@ def GetActivityList(request):
     #print(Return)
     Response = JsonResponse(Return)
     return Response    
+
+def QueryActivity(request):
+    '''
+    描述：处理查询单个活动信息请求
+    参数：request
+    Get getActivityInfo?userWechatId=(String)&activityId=(String)
+    成功返回：
+    {
+    "id": 1,
+    "name": "校友会第一次活动",
+    "place": "北京",
+    "start": "2019-09-26 09:30:00",
+    "end": "2019-09-26 10:30:00",
+    "maxUser": 100,
+    "curUser": 1,
+    "creator": "xxxxx"
+    }
+    失败返回：
+    {
+        “error”："原因"
+    }
+    '''
+    Success = True
+    Return = {}
+
+    #print(request.POST)
+    #获取请求数据
+    if Success:
+        try:
+            OpenID = request.GET.get("userWechatId")
+            ActivityID = request.GET.get("activityId")
+            #print(OpenID, Name, Place, Start, End, MaxUser)
+        except:
+            Success = False
+    #print(OpenID,Name,Gender,Flag,Education)
+    #print(request)
+
+    #判断是否登录
+    if Success:
+        try:
+            Info = DatabaseManager.QueryUser(OpenID)
+            if not Info:
+                Success = False
+                Return["error"] = "未登录"
+        except:
+            Success = False
+    #print(Success)
+
+
+    #调用数据库函数修改信息
+    if Success:
+        try:
+            Info = DatabaseManager.QueryActivity(ActivityID)
+            #print(Info)
+            if not Info:
+                Success = False
+        except:
+            Success = False
+
+    #print(Success)
+    if Success == False and ("error" not in Return.keys()):
+        Return["error"] = "others"
+    if Success == True:
+        Return = Info
+
+    Response = JsonResponse(Return)
+    if Success == True:
+        Response.status_code = 200
+    else:
+        Response.status_code = 400
+    return Response
+
+def DeleteActivity(request):
+    '''
+    描述：处理删除活动信息请求
+    参数：request
+    POST deleteActivity?userWechatId=(String)&activityId=(String)    
+    成功返回：{}
+    
+    失败返回：
+    {
+        “error”："原因"
+    }
+    '''
+    Success = True
+    Return = {}
+
+    #print(request.POST)
+    if Success:
+        try:
+            OpenID = request.GET.get("userWechatId")
+            ActivityID = request.GET.get("activityId")
+            #print(OpenID, Name, Place, Start, End, MaxUser)
+        except:
+            Success = False
+    #print(OpenID,Name,Gender,Flag,Education)
+    #print(request)
+
+    #判断是否登录
+    if Success:
+        try:
+            Info = DatabaseManager.QueryUser(OpenID)
+            if not Info:
+                Success = False
+                Return["error"] = "未登录"
+        except:
+            Success = False
+    #print(Success)
+
+    #判断是否有权限
+    if Success:
+        try:
+            Info = DatabaseManager.JudgeCreator(OpenID, ActivityID)
+            if Info == False:
+                Success = False
+                Return["error"] = "没有权限"
+        except:
+            Success = False
+
+    #调用数据库函数修改信息
+    if Success:
+        try:
+            Info = DatabaseManager.DeleteActivity(ActivityID)
+            #print(Info)
+            if Info == False:
+                Success = False
+        except:
+            Success = False
+
+    #print(Success)
+    if Success == False and ("error" not in Return.keys()):
+        Return["error"] = "others"
+
+    Response = JsonResponse(Return)
+    if Success == True:
+        Response.status_code = 200
+    else:
+        Response.status_code = 400
+    return Response
