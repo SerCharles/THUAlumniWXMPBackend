@@ -2,6 +2,10 @@
     import Vue from 'vue';
     export default Vue.extend({
         mpType: 'app',
+        globalData:{
+            baseUrl: "http://thaluapitest.starrah.cn",
+            openId: ""
+        },
         onLaunch() {
             console.log('App Launch')
         },
