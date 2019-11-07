@@ -11,7 +11,7 @@
         </view>
         <scroll-view scroll-y="true" >
             <view class="cu-list menu">
-                <view class="cu-item arrow" style="display: block" v-for="activity in activities_toShow" @click="jumpToActivityDetail($event, activity)">
+                <view class="cu-item arrow" style="display: block" v-for="activity in activities_toShow" :key="activity.id" @click="jumpToActivityDetail($event, activity)">
                     <view>
                         <text class="cuIcon-activity"></text>
                         <text class="text-black text-xl">{{activity.name}}</text>
@@ -44,7 +44,7 @@
         activities_toShow: ActivitySchema[] = [];
         async updateAllActivity(){
             let res = await promisify.request({
-                url: getApp().globalData.baseUrl + `/getAllActivity?openId=${getApp().globalData.openId}`,
+                url: getApp().globalData.baseUrl + `/getAllActivity`,
                 method: "GET",
                 dataType: "json",
             });
@@ -53,7 +53,7 @@
         search(){
             uni.showToast({title: "尚未支持", icon:"none"})
         }
-        onLoad(){
+        mounted(){
             // this.activities_toShow = [
             //     {name: "aaa", place: "bbb"},
             //     {name: "aaa", place: "bbb"},

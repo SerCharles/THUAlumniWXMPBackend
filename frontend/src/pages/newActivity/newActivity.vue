@@ -9,11 +9,19 @@
         </view>
     </view>
     <form @submit="submitNewActivity">
-        <view class="cu-form-group margin-top">
+        <view class="cu-form-group margin-top-sm">
             <view class="title">活动名称</view>
             <input name="name" />
         </view>
-        <view class="cu-form-group margin-top">
+        <view class="cu-form-group margin-top-sm">
+        <view class="title">活动类型</view>
+        <picker mode="multiSelector" @change="MultiChange" @columnchange="MultiColumnChange" :value="multiIndex" :range="multiArray">
+            <view class="picker">
+                {{multiArray[0][multiIndex[0]]}}，{{multiArray[1][multiIndex[1]]}}，{{multiArray[2][multiIndex[2]]}}
+            </view>
+        </picker>
+    </view>
+        <view class="cu-form-group margin-top-sm">
             <view class="title">地点</view>
             <input name="space" />
         </view>
@@ -60,7 +68,6 @@
     import dateFormat from 'dateformat'
     import promisify from '../../apps/Promisify'
     import delay from 'delay';
-
     @Component
     export default class newActivity extends Vue{
         name: "newActivity";
@@ -72,6 +79,50 @@
         startTime: string = "请选择";
         endDate: string = "请选择";
         endTime: string = "请选择";
+        typeMultiData: Array<{name: string, children: Array<{name: string, children?: any}>}> = [
+            {
+                name: "个人活动",
+                children: [
+                    {
+                        name: "聚餐"
+                    },
+                    {
+                        name: "唱歌"
+                    },
+                    {
+                        name: "跑步"
+                    }
+                ]
+            },
+            {
+                name:"班级活动",
+                children: [
+                    {
+                        name: "聚餐"
+                    },
+                    {
+                        name: "唱歌"
+                    },
+                    {
+                        name: "跑步"
+                    }
+                ]
+            }
+        ];
+        typeMultiIndex: Array<number> = [];
+        typeMultiArray: Array<Array<string>>;
+        typeMultiChange(e){
+            this.typeMultiIndex = e.detail.value
+        }
+        typeMultiColumnChange(e){
+            let data = {
+                index: this.typeMultiIndex,
+                array: this.typeMultiArray
+            };
+            let column = e.detail.column;
+            data.index[column] = e.detail.value;
+        }
+
         get minStartTime(): string{
             if(this.endDate <= this.startDate){
                 return this.startTime
@@ -95,7 +146,7 @@
             console.log(e.detail.value);
             let formData = e.detail.value;
             let res = await promisify.request({
-                url: getApp().globalData.baseUrl + `/createActivity?openId=getApp().globalData.openId`,
+                url: getApp().globalData.baseUrl + `/createActivity`,
                 method: "POST",
                 dataType: "json",
                 data: {
@@ -117,5 +168,4 @@
 </script>
 
 <style scoped>
-
 </style>

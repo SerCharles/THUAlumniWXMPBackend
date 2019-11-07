@@ -1,0 +1,16 @@
+name: frontend
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@master
+    - name: set-up dependences
+      working-directory: ./frontend
+      run: npm install
+    - name: build
+      working-directory: ./frontend
+      run: npm run build

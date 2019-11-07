@@ -10,16 +10,16 @@
     </view>
     <view>
         <view>
-            <text class="text-black text-bold text-sl">{{activityData.name}}</text>
+            <text class="text-black text-bold text-df">{{activityData.name}}</text>
         </view>
         <view>
-            <text class="text-black text-bold text-sl">时间：{{activityData.start}}-{{activityData.end}}</text>
+            <text class="text-black text-bold text-df">时间：{{activityData.start}}-{{activityData.end}}</text>
         </view>
         <view>
-            <text class="text-black text-bold text-sl">地点：{{activityData.place}}</text>
+            <text class="text-black text-bold text-df">地点：{{activityData.place}}</text>
         </view>
         <view>
-            <text class="text-black text-bold text-sl">人数：{{activityData.curUser}}/{{activityData.maxUser}}</text>
+            <text class="text-black text-bold text-df">人数：{{activityData.curUser}}/{{activityData.maxUser}}</text>
         </view>
     </view>
     <view>
@@ -41,7 +41,7 @@
         async updateActivityData(){
             if(!this.activityData){
                 let res = await promisify.request({
-                    url: getApp().globalData.baseUrl + `/getActivityInfo?openId=${getApp().globalData.openId}&activityId=${this.activityId}`,
+                    url: getApp().globalData.baseUrl + `/getActivityInfo?activityId=${this.activityId}`,
                     method: "GET",
                     dataType: "json",
                 });

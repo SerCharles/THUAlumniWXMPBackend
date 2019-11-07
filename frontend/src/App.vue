@@ -1,11 +1,9 @@
 <script lang="ts">
     import Vue from 'vue';
+    import initialGlobalData from './apps/typesDeclare/InitialGlobalData'
     export default Vue.extend({
+        globalData: initialGlobalData,
         mpType: 'app',
-        globalData:{
-            baseUrl: "http://thaluapitest.starrah.cn",
-            openId: ""
-        },
         onLaunch() {
             console.log('App Launch')
         },
