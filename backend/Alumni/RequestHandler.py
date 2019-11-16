@@ -1,6 +1,22 @@
 '''
 处理请求的函数集合
 
+<<<<<<< HEAD
+=======
+用户类请求：
+    登录（todo）
+    查询信息
+活动类请求：
+    增加单个
+    报名单个
+    查询单个
+    查询全部
+    查询用户对应活动
+    查询人员
+    修改单个
+    修改用户信息
+    删除单个
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
 '''
 
 from django.http import HttpResponse
@@ -8,10 +24,19 @@ from django.http import JsonResponse
 from django.http import FileResponse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+<<<<<<< HEAD
 #import numpy as np
 #from io import BytesIO
 import random
 import sqlite3
+=======
+import numpy as np
+from PIL import Image
+from io import BytesIO
+import random
+import sqlite3
+import pickle
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
 import sys
 import os
 import time
@@ -19,6 +44,7 @@ import configparser
 import urllib.request
 import base64
 import json
+<<<<<<< HEAD
 import requests
 import traceback
 from Alumni.constants import Constants
@@ -273,6 +299,13 @@ def ReceiveAlunmiInfo(request):
     else:
         Response.status_code = 400
     return Response
+=======
+import imageio
+import scipy.misc as misc
+import traceback
+from Alumni.constants import Constants
+from . import DatabaseManager
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
 
 def QueryUser(request):
     '''
@@ -318,7 +351,11 @@ def QueryUser(request):
     #判断是否登录， 获取待查询的openid
     if Success:
         try:
+<<<<<<< HEAD
             SelfOpenID = DatabaseUserManager.GetCurrentUser(TheSession)
+=======
+            SelfOpenID = DatabaseManager.GetCurrentUser(TheSession)
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
             if SelfOpenID == None:
                 Success = False
                 ErrorId = Constants.ERROR_CODE_LOGIN_ERROR
@@ -340,6 +377,7 @@ def QueryUser(request):
     print(SelfOpenID)
     if Success:
         try:
+<<<<<<< HEAD
             Info = DatabaseUserManager.QueryUser(TheOpenID)
             #print(Info)
             if Info == {}:
@@ -350,21 +388,38 @@ def QueryUser(request):
                 Success = False
                 Reason = "身份信息尚未存储！"
                 ErrorId = Constants.ERROR_CODE_NOT_STORED
+=======
+            Info = DatabaseManager.QueryUser(TheOpenID)
+            #print(Info)
+            if Info == {}:
+                Success = False
+                Reason = "身份信息尚未存储！"
+                ErrorId = Constants.ERROR_CODE_NOT_STORED
+
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
         except:
             Success = False
             Reason = "身份信息不存在！"
             ErrorId = Constants.ERROR_CODE_NOT_FOUND
 
     if Success == True:
+<<<<<<< HEAD
         Return = Info    
+=======
+        Return = Info
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     else:
         Return["errid"] = ErrorId
         Return["errmsg"] = Reason
     Response = JsonResponse(Return)
+<<<<<<< HEAD
     if Success == True:
         Response.status_code = 200
     else:
         Response.status_code = 400
+=======
+    Response.status_code = 400
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     return Response
 
 def StartActivity(request):
@@ -401,7 +456,11 @@ def StartActivity(request):
     #判断是否登录， 获取待查询的openid
     if Success:
         try:
+<<<<<<< HEAD
             SelfOpenID = DatabaseUserManager.GetCurrentUser(TheSession)
+=======
+            SelfOpenID = DatabaseManager.GetCurrentUser(TheSession)
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
             if SelfOpenID == None:
                 Success = False
                 Reason = "用户未登录！"
@@ -416,7 +475,11 @@ def StartActivity(request):
     if Success:
         try:
             RequestBody = json.loads(request.body)
+<<<<<<< HEAD
             Info = DatabaseActivityManager.AddActivity(SelfOpenID, RequestBody)
+=======
+            Info = DatabaseManager.AddActivity(SelfOpenID, RequestBody)
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
         except:
             Success = False
             Reason = "请求参数不合法！"
@@ -434,10 +497,14 @@ def StartActivity(request):
         Return["errid"] = ErrorId
         Return["errmsg"] = Reason
     Response = JsonResponse(Return)
+<<<<<<< HEAD
     if Success == True:
         Response.status_code = 200
     else:
         Response.status_code = 400
+=======
+    Response.status_code = 400
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     return Response
 
 def JoinActivity(request):
@@ -461,7 +528,10 @@ def JoinActivity(request):
     TheSession = ""
     TheActivity = Constants.UNDEFINED_NUMBER
     TheUserID = ""
+<<<<<<< HEAD
     TheJoinReason = None
+=======
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     #获取请求数据
     if Success:
         try:
@@ -471,6 +541,7 @@ def JoinActivity(request):
             Success = False
             Reason = "请求参数不合法！"
             Code = Constants.ERROR_CODE_INVALID_PARAMETER
+<<<<<<< HEAD
     #获取请求理由
     if Success:
         try:
@@ -482,6 +553,13 @@ def JoinActivity(request):
     if Success:
         try:
             TheUserID = DatabaseUserManager.GetCurrentUser(TheSession)
+=======
+    
+    #判断是否登录， 获取待查询的openid
+    if Success:
+        try:
+            TheUserID = DatabaseManager.GetCurrentUser(TheSession)
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
             if TheUserID == None:
                 Success = False
                 Reason = "用户未登录！"
@@ -494,6 +572,7 @@ def JoinActivity(request):
     #调用数据库函数添加活动
     if Success:
         try:
+<<<<<<< HEAD
             Info = DatabaseActivityManager.JoinActivity(TheUserID, TheActivity, False, TheJoinReason)
             #print(Info)
             if Info["result"] != "success":
@@ -503,6 +582,17 @@ def JoinActivity(request):
         except:
             Success = False
             Reason = "加入活动失败"
+=======
+            Info = DatabaseManager.JoinActivity(TheUserID, TheActivity, False)
+            #print(Info)
+            if Info["result"] != "success":
+                Success = False
+                Reason = Info["Reason"]
+                ErrorID = Info["code"]
+        except:
+            Success = False
+            Reason = "添加活动失败"
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
             ErrorID = Constants.ERROR_CODE_UNKNOWN
 
     if Success:
@@ -511,10 +601,14 @@ def JoinActivity(request):
         Return["errid"] = ErrorID
         Return["errmsg"] = Reason
     Response = JsonResponse(Return)
+<<<<<<< HEAD
     if Success == True:
         Response.status_code = 200
     else:
         Response.status_code = 400
+=======
+    Response.status_code = 400
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     return Response
  
 def GetActivityList(request):
@@ -531,7 +625,10 @@ def GetActivityList(request):
     Success = True
     Return = {}
     Info = {}
+<<<<<<< HEAD
     ErrorInfo = {}
+=======
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     Reason = ""
     ErrorID = Constants.UNDEFINED_NUMBER
     TheSession = ""
@@ -548,7 +645,11 @@ def GetActivityList(request):
     #判断是否登录，获取待查询的openid
     if Success:
         try:
+<<<<<<< HEAD
             TheUserID = DatabaseUserManager.GetCurrentUser(TheSession)
+=======
+            TheUserID = DatabaseManager.GetCurrentUser(TheSession)
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
             if TheUserID == None:
                 Success = False
                 Reason = "用户未登录！"
@@ -561,12 +662,21 @@ def GetActivityList(request):
     #调用数据库函数
     if Success:
         try:
+<<<<<<< HEAD
             Info, ErrorInfo = DatabaseActivityManager.ShowAllActivity()
             #print(Info)
             if Info == {}:
                 Success = False
                 Reason = ErrorInfo["reason"]
                 ErrorID = ErrorInfo["code"]
+=======
+            Info = DatabaseManager.ShowAllActivity()
+            #print(Info)
+            if Info == {}:
+                Success = False
+                Reason = "查询活动列表失败！"
+                ErrorID = Constants.ERROR_CODE_NOT_FOUND
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
         except:
             Success = False
             Reason = "查询活动列表失败！"
@@ -578,10 +688,14 @@ def GetActivityList(request):
         Return["errid"] = ErrorID
         Return["errmsg"] = Reason
     Response = JsonResponse(Return)
+<<<<<<< HEAD
     if Success == True:
         Response.status_code = 200
     else:
         Response.status_code = 400
+=======
+    Response.status_code = 400
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     return Response 
 
 def QueryActivity(request):
@@ -611,12 +725,20 @@ def QueryActivity(request):
         except:
             Success = False
             Reason = "请求参数不合法！"
+<<<<<<< HEAD
             ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
+=======
+            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     
     #判断是否登录，获取待查询的openid
     if Success:
         try:
+<<<<<<< HEAD
             TheUserID = DatabaseUserManager.GetCurrentUser(TheSession)
+=======
+            TheUserID = DatabaseManager.GetCurrentUser(TheSession)
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
             if TheUserID == None:
                 Success = False
                 Reason = "用户未登录！"
@@ -629,10 +751,18 @@ def QueryActivity(request):
     #调用数据库函数
     if Success:
         try:
+<<<<<<< HEAD
             Info = DatabaseActivityManager.QueryActivity(TheUserID, TheActivity)
             if Info == {}:
                 Success = False
                 Reason = "未找到活动！"
+=======
+            Info = DatabaseManager.QueryActivity(TheActivity)
+            #print(Info)
+            if Info == {}:
+                Success = False
+                Reason = "查询活动详情失败！"
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
                 ErrorID = Constants.ERROR_CODE_NOT_FOUND
         except:
             Success = False
@@ -645,10 +775,14 @@ def QueryActivity(request):
         Return["errid"] = ErrorID
         Return["errmsg"] = Reason
     Response = JsonResponse(Return)
+<<<<<<< HEAD
     if Success == True:
         Response.status_code = 200
     else:
         Response.status_code = 400
+=======
+    Response.status_code = 400
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     return Response 
 
 def QuerySelfActivity(request):
@@ -665,7 +799,10 @@ def QuerySelfActivity(request):
     Success = True
     Return = {}
     Info = {}
+<<<<<<< HEAD
     ErrorInfo = {}
+=======
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     Reason = ""
     ErrorID = Constants.UNDEFINED_NUMBER
     TheSession = ""
@@ -682,7 +819,11 @@ def QuerySelfActivity(request):
     #判断是否登录，获取待查询的openid
     if Success:
         try:
+<<<<<<< HEAD
             TheUserID = DatabaseUserManager.GetCurrentUser(TheSession)
+=======
+            TheUserID = DatabaseManager.GetCurrentUser(TheSession)
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
             if TheUserID == None:
                 Success = False
                 Reason = "用户未登录！"
@@ -695,12 +836,21 @@ def QuerySelfActivity(request):
     #调用数据库函数
     if Success:
         try:
+<<<<<<< HEAD
             Info, ErrorInfo = DatabaseActivityManager.ShowSelfActivity(TheUserID)
             #print(Info)
             if Info == {}:
                 Success = False
                 Reason = ErrorInfo["reason"]
                 ErrorID = ErrorInfo["code"]
+=======
+            Info = DatabaseManager.ShowSelfActivity(TheUserID)
+            #print(Info)
+            if Info == {}:
+                Success = False
+                Reason = "查询活动列表失败！"
+                ErrorID = Constants.ERROR_CODE_NOT_FOUND
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
         except:
             Success = False
             Reason = "查询活动列表失败！"
@@ -712,15 +862,23 @@ def QuerySelfActivity(request):
         Return["errid"] = ErrorID
         Return["errmsg"] = Reason
     Response = JsonResponse(Return)
+<<<<<<< HEAD
     if Success == True:
         Response.status_code = 200
     else:
         Response.status_code = 400
+=======
+    Response.status_code = 400
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     return Response 
 
 def QueryAllParticipants(request):
     '''
+<<<<<<< HEAD
     描述：处理查询单个活动全部成员信息请求--用户
+=======
+    描述：处理查询单个活动全部成员信息请求
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     参数：request
     成功返回全部成员信息
     失败则是
@@ -732,7 +890,10 @@ def QueryAllParticipants(request):
     Success = True
     Return = {}
     Info = {}
+<<<<<<< HEAD
     ErrorInfo = {}
+=======
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     Reason = ""
     ErrorID = Constants.UNDEFINED_NUMBER
     TheSession = ""
@@ -751,7 +912,11 @@ def QueryAllParticipants(request):
     #判断是否登录，获取待查询的openid
     if Success:
         try:
+<<<<<<< HEAD
             TheUserID = DatabaseUserManager.GetCurrentUser(TheSession)
+=======
+            TheUserID = DatabaseManager.GetCurrentUser(TheSession)
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
             if TheUserID == None:
                 Success = False
                 Reason = "用户未登录！"
@@ -764,12 +929,21 @@ def QueryAllParticipants(request):
     #调用数据库函数
     if Success:
         try:
+<<<<<<< HEAD
             Info, ErrorInfo = DatabaseActivityManager.ShowAllMembers(TheActivity)
             #print(Info)
             if Info == {}:
                 Success = False
                 Reason = ErrorInfo["reason"]
                 ErrorID = ErrorInfo["code"]
+=======
+            Info = DatabaseManager.ShowAllMembers(TheActivity)
+            #print(Info)
+            if Info == {}:
+                Success = False
+                Reason = "查询活动成员信息失败！"
+                ErrorID = Constants.ERROR_CODE_NOT_FOUND
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
         except:
             Success = False
             Reason = "查询活动成员信息失败！"
@@ -781,6 +955,7 @@ def QueryAllParticipants(request):
         Return["errid"] = ErrorID
         Return["errmsg"] = Reason
     Response = JsonResponse(Return)
+<<<<<<< HEAD
     if Success == True:
         Response.status_code = 200
     else:
@@ -792,6 +967,19 @@ def QueryAllParticipantsAdmin(request):
     描述：处理查询单个活动全部成员信息请求--管理员
     参数：request
     成功返回全部成员信息
+=======
+    Response.status_code = 400
+    return Response 
+
+def DeleteActivity(request):
+    '''
+    描述：处理删除单个活动信息请求
+    参数：request
+    成功返回
+    {
+    "result": "success"
+    }
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     失败则是
     {
     "errid":xxx,
@@ -801,7 +989,10 @@ def QueryAllParticipantsAdmin(request):
     Success = True
     Return = {}
     Info = {}
+<<<<<<< HEAD
     ErrorInfo = {}
+=======
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     Reason = ""
     ErrorID = Constants.UNDEFINED_NUMBER
     TheSession = ""
@@ -820,7 +1011,11 @@ def QueryAllParticipantsAdmin(request):
     #判断是否登录，获取待查询的openid
     if Success:
         try:
+<<<<<<< HEAD
             TheUserID = DatabaseUserManager.GetCurrentUser(TheSession)
+=======
+            TheUserID = DatabaseManager.GetCurrentUser(TheSession)
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
             if TheUserID == None:
                 Success = False
                 Reason = "用户未登录！"
@@ -833,6 +1028,7 @@ def QueryAllParticipantsAdmin(request):
     #调用数据库函数
     if Success:
         try:
+<<<<<<< HEAD
             Info, ErrorInfo = DatabaseActivityManager.ShowAllMembersAdmin(TheUserID, TheActivity)
             #print(Info)
             if Info == {}:
@@ -842,6 +1038,17 @@ def QueryAllParticipantsAdmin(request):
         except:
             Success = False
             Reason = "查询活动成员信息失败！"
+=======
+            Info = DatabaseManager.DeleteActivity(TheUserID, TheActivity)
+            #print(Info)
+            if Info["result"] != "success":
+                Success = False
+                Reason = Info["reason"]
+                ErrorID = Info["code"]
+        except:
+            Success = False
+            Reason = "删除活动失败！"
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
             ErrorID = Constants.ERROR_CODE_NOT_FOUND
 
     if Success:
@@ -850,6 +1057,7 @@ def QueryAllParticipantsAdmin(request):
         Return["errid"] = ErrorID
         Return["errmsg"] = Reason
     Response = JsonResponse(Return)
+<<<<<<< HEAD
     if Success == True:
         Response.status_code = 200
     else:
@@ -861,6 +1069,19 @@ def QueryAllAuditParticipants(request):
     描述：处理查询单个活动全部待审核成员信息请求--管理员
     参数：request
     成功返回待审核成员信息
+=======
+    Response.status_code = 400
+    return Response 
+
+def ChangeActivity(request):
+    '''
+    描述：处理修改活动请求
+    参数：request
+    成功只返回
+    {
+    "result": "success"
+    }   
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     失败则是
     {
     "errid":xxx,
@@ -869,6 +1090,7 @@ def QueryAllAuditParticipants(request):
     '''
     Success = True
     Return = {}
+<<<<<<< HEAD
     Info = {}
     ErrorInfo = {}
     Reason = ""
@@ -876,20 +1098,38 @@ def QueryAllAuditParticipants(request):
     TheSession = ""
     TheActivity = Constants.UNDEFINED_NUMBER
     TheUserID = ""
+=======
+    Reason = ""
+    ErrorID = Constants.UNDEFINED_NUMBER
+    TheSession = ""
+    TheUserID = ""
+    Data = json.loads(request.body)
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     #获取请求数据
     if Success:
         try:
             TheSession = request.GET.get("session")
+<<<<<<< HEAD
             TheActivity = int(request.GET.get("activityId"))
+=======
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
         except:
             Success = False
             Reason = "请求参数不合法！"
             Code = Constants.ERROR_CODE_INVALID_PARAMETER
+<<<<<<< HEAD
     
     #判断是否登录，获取待查询的openid
     if Success:
         try:
             TheUserID = DatabaseUserManager.GetCurrentUser(TheSession)
+=======
+
+    #判断是否登录， 获取待查询的openid
+    if Success:
+        try:
+            TheUserID = DatabaseManager.GetCurrentUser(TheSession)
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
             if TheUserID == None:
                 Success = False
                 Reason = "用户未登录！"
@@ -902,6 +1142,7 @@ def QueryAllAuditParticipants(request):
     #调用数据库函数
     if Success:
         try:
+<<<<<<< HEAD
             Info, ErrorInfo = DatabaseActivityManager.ShowAllAuditMembers(TheUserID, TheActivity)
             if Info == {}:
                 Success = False
@@ -932,6 +1173,35 @@ def DeleteActivity(request):
     {
     "result": "success"
     }
+=======
+            Info = DatabaseManager.ChangeActivity(TheUserID, Data)
+            if Info["result"] != "success":
+                Success = False
+                Reason = Info["reason"]
+                ErrorID = Info["code"]
+        except:
+            Success = False
+            Reason = "修改活动失败"
+            ErrorID = Constants.ERROR_CODE_UNKNOWN
+    
+    if Success:
+        Return["result"] = "success"
+    else:
+        Return["errmsg"] = Reason
+        Return["errid"] = ErrorID
+    Response = JsonResponse(Return)
+    Response.status_code = 400
+    return Response
+
+def ChangeUserStatus(request):
+    '''
+    描述：处理修改用户状态请求
+    参数：request
+    成功只返回
+    {
+    "result": "success"
+    }   
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     失败则是
     {
     "errid":xxx,
@@ -940,26 +1210,45 @@ def DeleteActivity(request):
     '''
     Success = True
     Return = {}
+<<<<<<< HEAD
     Info = {}
     Reason = ""
     ErrorID = Constants.UNDEFINED_NUMBER
     TheSession = ""
     TheActivity = Constants.UNDEFINED_NUMBER
     TheUserID = ""
+=======
+    Reason = ""
+    ErrorID = Constants.UNDEFINED_NUMBER
+    TheSession = ""
+    TheUserID = ""
+    Data = json.loads(request.body)
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     #获取请求数据
     if Success:
         try:
             TheSession = request.GET.get("session")
+<<<<<<< HEAD
             TheActivity = int(request.GET.get("activityId"))
+=======
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
         except:
             Success = False
             Reason = "请求参数不合法！"
             Code = Constants.ERROR_CODE_INVALID_PARAMETER
+<<<<<<< HEAD
     
     #判断是否登录，获取待查询的openid
     if Success:
         try:
             TheUserID = DatabaseUserManager.GetCurrentUser(TheSession)
+=======
+
+    #判断是否登录， 获取待查询的openid
+    if Success:
+        try:
+            TheUserID = DatabaseManager.GetCurrentUser(TheSession)
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
             if TheUserID == None:
                 Success = False
                 Reason = "用户未登录！"
@@ -972,14 +1261,19 @@ def DeleteActivity(request):
     #调用数据库函数
     if Success:
         try:
+<<<<<<< HEAD
             Info = DatabaseActivityManager.DeleteActivity(TheUserID, TheActivity)
             #print(Info)
+=======
+            Info = DatabaseManager.ChangeUserStatus(TheUserID, Data)
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
             if Info["result"] != "success":
                 Success = False
                 Reason = Info["reason"]
                 ErrorID = Info["code"]
         except:
             Success = False
+<<<<<<< HEAD
             Reason = "删除活动失败！"
             ErrorID = Constants.ERROR_CODE_NOT_FOUND
 
@@ -1394,3 +1688,16 @@ def QueryDepartments(request):
     else:
         Response.status_code = 400
     return Response  
+=======
+            Reason = "修改用户信息失败"
+            ErrorID = Constants.ERROR_CODE_UNKNOWN
+    
+    if Success:
+        Return["result"] = "success"
+    else:
+        Return["errmsg"] = Reason
+        Return["errid"] = ErrorID
+    Response = JsonResponse(Return)
+    Response.status_code = 400
+    return Response
+>>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
