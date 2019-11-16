@@ -1,6 +1,0 @@
-git remote add origin https://github.com/Starrah/THUAlumniWXMP.git
-git add .
-git commit -m 描述文字
-git push origin master:SGL
-
-
