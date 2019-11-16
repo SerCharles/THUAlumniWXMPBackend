@@ -1,42 +1,25 @@
 from django.db import models
  
  
-<<<<<<< HEAD
 class GlobalVariables(models.Model):
     AppId = models.CharField(max_length = 100)
     SecretId = models.CharField(max_length = 100)
 
 
-=======
->>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
 class User(models.Model):
     ID = models.AutoField(primary_key = True)
     Name = models.CharField(max_length = 30)
     OpenID = models.CharField(max_length = 100, unique = True)
     Session = models.CharField(max_length = 100)
-<<<<<<< HEAD
     SessionKey = models.CharField(max_length = 300)
     RequestID = models.CharField(max_length = 300)
 
 class Education(models.Model):
-=======
-
-class Education(models.Model):
-    EDUCATION_TYPE = (
-        ('U','Undergraduate'),
-        ('M','Master'),
-        ('D','Doctor'),
-    )
->>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     ID = models.AutoField(primary_key = True)
     Student = models.ForeignKey(User, on_delete = models.CASCADE, related_name = "Education")
     StartYear = models.IntegerField()
     Department = models.CharField(max_length = 30)
-<<<<<<< HEAD
     Type = models.CharField(max_length = 30)
-=======
-    Type = models.CharField(max_length = 30, choices = EDUCATION_TYPE)
->>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
 
 class Activity(models.Model):
     STATUS_TYPE_ACTIVITY = (
@@ -49,14 +32,11 @@ class Activity(models.Model):
         (6,'SigninPaused'),
         (7,'Finish'),
     )
-<<<<<<< HEAD
     RULE_TYPE_ACTIVITY = (
         (0, "Accept"),
         (1, "Audit"),
         (2, "Reject"),
     )
-=======
->>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     ID = models.AutoField(primary_key = True)
     Name = models.CharField(max_length = 100)
     Place = models.CharField(max_length = 100)
@@ -64,17 +44,13 @@ class Activity(models.Model):
     EndTime = models.IntegerField()
     SignUpStartTime = models.IntegerField()
     SignUpEndTime = models.IntegerField()
-<<<<<<< HEAD
     CreateTime = models.IntegerField()
-=======
->>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     MinUser = models.IntegerField()
     CurrentUser = models.IntegerField()
     MaxUser = models.IntegerField()
     Type = models.CharField(max_length = 100)
     Status = models.IntegerField(choices = STATUS_TYPE_ACTIVITY)
     CanBeSearched = models.BooleanField()
-<<<<<<< HEAD
     GlobalRule = models.IntegerField(choices = RULE_TYPE_ACTIVITY)
 
 class AdvancedRule(models.Model):
@@ -90,9 +66,6 @@ class AdvancedRule(models.Model):
     Department = models.CharField(max_length = 30)
     EducationType = models.CharField(max_length = 30)
     Type = models.IntegerField(choices = RULE_TYPE)
-=======
-    #todo:rule
->>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
 
 class JoinInformation(models.Model):
     STATUS_TYPE_JOIN = (
@@ -109,17 +82,13 @@ class JoinInformation(models.Model):
         (2, "Creator") 
     )
     ID = models.AutoField(primary_key = True)
-<<<<<<< HEAD
     SubmitTime = models.IntegerField()
-=======
->>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
     JoinTime = models.IntegerField()
     CheckTime = models.IntegerField()
     Status = models.IntegerField(choices = STATUS_TYPE_JOIN)
     Role = models.IntegerField(choices = ROLE_TYPE_JOIN)
     UserId = models.ForeignKey(User, on_delete = models.CASCADE, related_name = "History")
     ActivityId = models.ForeignKey(Activity, on_delete = models.CASCADE, related_name = "History")
-<<<<<<< HEAD
     JoinReason = models.CharField(max_length = 310)
     #todo:付款等
 
@@ -134,7 +103,3 @@ class EducationType(models.Model):
 class ActivityType(models.Model):
     ID = models.AutoField(primary_key = True)
     Name = models.CharField(max_length = 300)
-=======
-
-    #todo:付款等
->>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c

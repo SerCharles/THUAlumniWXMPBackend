@@ -25,11 +25,7 @@ SECRET_KEY = '(ct=6w3+)&^6h6yqr94@le=_z)#r2580r0$33pmbtu2_#totfh'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-<<<<<<< HEAD
 ALLOWED_HOSTS = ['*']
-=======
-ALLOWED_HOSTS = []
->>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
 
 
 # Application definition
@@ -52,10 +48,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-<<<<<<< HEAD
     'Alumni.middlewares.MyTest',
-=======
->>>>>>> 82e159b3c648f0b186de5ef338522a67d18d598c
 ]
 
 ROOT_URLCONF = 'Alumni.urls'
