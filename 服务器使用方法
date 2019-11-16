@@ -1,0 +1,5 @@
+ssh ubuntu@154.8.136.203
+Sgl1871tclQwQqaq
+scp -r backend ubuntu@154.8.136.203:backend
+
+
