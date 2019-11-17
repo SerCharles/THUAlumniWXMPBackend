@@ -1,6 +1,19 @@
 '''
 处理请求的函数集合
 
+用户类请求：
+    登录（todo）
+    查询信息
+活动类请求：
+    增加单个
+    报名单个
+    查询单个
+    查询全部
+    查询用户对应活动
+    查询人员
+    修改单个
+    修改用户信息
+    删除单个
 '''
 
 from django.http import HttpResponse
@@ -434,7 +447,8 @@ def StartActivity(request):
         Return["errid"] = ErrorId
         Return["errmsg"] = Reason
     Response = JsonResponse(Return)
-    if Success == True:
+
+    if Success:
         Response.status_code = 200
     else:
         Response.status_code = 400
