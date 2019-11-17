@@ -54,13 +54,14 @@ ChangeUserInformation = {"openId":"2017013569", "activityId":1, "newStatus":5, "
 #print(DatabaseManager.ShowSelfActivity("xxxxx"))
 #print(DatabaseManager.ShowAllMembers(1))
 #print(DatabaseManager.ChangeUserStatus("xxxxx", ChangeUserInformation))
-#DatabaseManager.GenerateSessionID()
+#DataBaseGlobalFunctions.GenerateSessionID()
 
 urlpatterns = [
     url(r'^login$', RequestHandler.LoginUser),
     url(r'^alumniCheck$', RequestHandler.GetAlumniInfo),
     url(r'^qhrcallback$', RequestHandler.ReceiveAlunmiInfo),
     url(r'^userData$', RequestHandler.QueryUser),
+    url(r'^setAvatarUrl$', RequestHandler.SetAvatarURL),
     url(r'^createActivity$', RequestHandler.StartActivity),
     url(r'^joinActivity$', RequestHandler.JoinActivity),
     url(r'^getAllActivity$', RequestHandler.GetActivityList),

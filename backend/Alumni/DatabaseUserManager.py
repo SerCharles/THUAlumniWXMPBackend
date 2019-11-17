@@ -58,7 +58,8 @@ def AddUserID(TheOpenID, TheSessionKey, TheSession):
 		Return["session"] = TheSession
 		Return["openId"] = TheOpenID
 	except:
-		User.objects.create(OpenID = TheOpenID, Session = TheSession, SessionKey = TheSessionKey, Name = "UNDEFINED", RequestID = "UNDEFINED")
+		User.objects.create(OpenID = TheOpenID, Session = TheSession, SessionKey = TheSessionKey, \
+		Name = "UNDEFINED", RequestID = "UNDEFINED", AvatarURL = "UNDEFINED")
 		Return["result"] = "success"
 		Return["session"] = TheSession
 		Return["openId"] = TheOpenID
@@ -78,6 +79,19 @@ def AddRequestID(TheSession, TheRequestID):
 	except:
 		return False
 
+def SetAvatarURL(TheOpenID, TheURL):
+	'''
+	描述：添加一个用户的头像url到数据库
+	参数：openid, 头像url
+	返回：成功：true 失败 false
+	'''
+	try:
+		TheUser = User.objects.get(OpenID = TheOpenID)
+		TheUser.AvatarURL = TheURL
+		TheUser.save()
+		return True
+	except:
+		return False
 
 def AddUser(TheInfo):
 	'''

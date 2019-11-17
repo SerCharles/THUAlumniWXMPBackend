@@ -271,6 +271,8 @@ def QueryActivity(TheUserID, TheActivityID):
 				TheId = item.UserId.OpenID
 				TheStatus = item.Status
 				TheUserInfo["openId"] = TheId
+				TheUserInfo["name"] = item.UserId.Name
+				TheUserInfo["avatarUrl"] = item.UserId.AvatarURL
 				TheUserInfo["userStatus"] = TheStatus
 				if TheStatus == Constants.USER_STATUS_WAITVALIDATE:
 					NumberNeedAudit = NumberNeedAudit + 1
@@ -419,6 +421,8 @@ def ShowAllMembers(TheActivityID):
 				TheResult["openId"] = item.UserId.OpenID
 				TheResult["selfStatus"] = item.Status
 				TheResult["selfRole"] = item.Role
+				TheResult["name"] = item.UserId.Name
+				TheResult["avatarUrl"] = item.UserId.AvatarURL
 				#TheResult["joinTime"] = DataBaseGlobalFunctions.TimeStampToTimeString(item.JoinTime)
 				#if item.CheckTime != Constants.UNDEFINED_NUMBER:
 				#	TheResult["checkTime"] = DataBaseGlobalFunctions.TimeStampToTimeString(item.CheckTime)
@@ -472,6 +476,8 @@ def ShowAllMembersAdmin(TheUserID, TheActivityID):
 			for item in TheJoinActivityList:
 				TheResult = {}
 				TheResult["openId"] = item.UserId.OpenID
+				TheResult["name"] = item.UserId.Name
+				TheResult["avatarUrl"] = item.UserId.AvatarURL
 				TheResult["selfStatus"] = item.Status
 				TheResult["selfRole"] = item.Role
 				TheResult["submitTime"] = DataBaseGlobalFunctions.TimeStampToTimeString(item.SubmitTime)
@@ -542,6 +548,7 @@ def ShowAllAuditMembers(TheUserID, TheActivityID):
 				if item.Status == Constants.USER_STATUS_WAITVALIDATE:
 					TheResult["openId"] = item.UserId.OpenID
 					TheResult["name"] = item.UserId.Name
+					TheResult["avatarUrl"] = item.UserId.AvatarURL
 					TheResult["submitTime"] = DataBaseGlobalFunctions.TimeStampToTimeString(item.SubmitTime)
 					TheResult["submitMsg"] = item.JoinReason
 					ResultList.append(TheResult)

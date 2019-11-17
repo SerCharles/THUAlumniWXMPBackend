@@ -1,19 +1,5 @@
 '''
 处理请求的函数集合
-
-用户类请求：
-    登录（todo）
-    查询信息
-活动类请求：
-    增加单个
-    报名单个
-    查询单个
-    查询全部
-    查询用户对应活动
-    查询人员
-    修改单个
-    修改用户信息
-    删除单个
 '''
 
 from django.http import HttpResponse
@@ -73,7 +59,7 @@ def LoginUser(request):
     if Success:
         try:
             TheParam = {}
-            TheParam = DatabaseUserManager.GetAppIDWechat()
+            TheParam = DataBaseGlobalFunctions.GetAppIDWechat()
             TheParam["js_code"] = TheCode
             TheParam["grant_type"] = "authorization_code"
         except:
@@ -97,22 +83,24 @@ def LoginUser(request):
                 ErrorId = Constants.ERROR_CODE_NETWORK_ERROR
                 Reason = "网络繁忙，访问微信失败！！"
             TheJson = TheRequest.json()
-            if TheJson["errcode"] == -1:
-                Success = False
-                ErrorId = Constants.ERROR_CODE_NETWORK_ERROR
-                Reason = "网络繁忙，访问微信失败！"  
-            elif TheJson["errcode"] == 40029:
-                Success = False
-                ErrorId = Constants.ERROR_CODE_INVALID_PARAMETER
-                Reason = "Code无效！"  
-            elif TheJson["errcode"] == 45011:
-                Success = False
-                ErrorId = Constants.ERROR_CODE_INVALID_CHANGE
-                Reason = "访问过于频繁，每个用户每分钟最多访问100次！"
-            elif TheJson["errcode"] != 0:
-                Success = False
-                ErrorId = Constants.ERROR_CODE_NETWORK_ERROR
-                Reason = "网络繁忙，访问微信失败！"          
+            #print(TheJson)
+            if "errcode" in TheJson:
+                if TheJson["errcode"] == -1:
+                    Success = False
+                    ErrorId = Constants.ERROR_CODE_NETWORK_ERROR
+                    Reason = "网络繁忙，访问微信失败！"  
+                elif TheJson["errcode"] == 40029:
+                    Success = False
+                    ErrorId = Constants.ERROR_CODE_INVALID_PARAMETER
+                    Reason = "Code无效！"  
+                elif TheJson["errcode"] == 45011:
+                    Success = False
+                    ErrorId = Constants.ERROR_CODE_INVALID_CHANGE
+                    Reason = "访问过于频繁，每个用户每分钟最多访问100次！"
+                elif TheJson["errcode"] != 0:
+                    Success = False
+                    ErrorId = Constants.ERROR_CODE_NETWORK_ERROR
+                    Reason = TheJson["errmsg"]       
         except:
             Success = False
             ErrorId = Constants.ERROR_CODE_NETWORK_ERROR
@@ -129,7 +117,7 @@ def LoginUser(request):
 
     if Success:
         try:
-            TheSession = DatabaseGlobalFunctions.GenerateSessionID()
+            TheSession = DataBaseGlobalFunctions.GenerateSessionID()
         except:
             Success = False
             ErrorId = Constants.ERROR_CODE_UNKNOWN
@@ -192,13 +180,13 @@ def GetAlumniInfo(request):
             Reason = "请求参数不合法！"
     if Success:
         try:
-            TheParam = DatabaseManager.GetAppIDThis()
+            TheParam = DataBaseGlobalFunctions.GetAppIDThis()
         except:
             Success = False
             ErrorId = Constants.ERROR_CODE_INVALID_PARAMETER
             Reason = "请求参数不合法！"
     #换取openid 和 key    
-    print(TheParam)
+    #print(TheParam)
     if Success:
         try:
             TheRequest = requests.post("https://alumni-test.iterator-traits.com/fake-info-tsinghua-org/mp/oauth/initiate/miniapp", data = json.dumps(TheParam), timeout = (5,10), allow_redirects = True)
@@ -286,6 +274,78 @@ def ReceiveAlunmiInfo(request):
     else:
         Response.status_code = 400
     return Response
+
+def SetAvatarURL(request):
+    '''
+    描述：处理设置用户头像url请求
+    参数：request
+    成功返回：
+    {
+    “result”：“success”
+    }
+    失败返回：
+    {"errid": 101, "errmsg": "身份信息不存在"}
+    '''
+    Success = True
+    Return = {}
+    Info = {}
+    RequestBody = {}
+    ErrorId = Constants.UNDEFINED_NUMBER
+    Reason = ""
+    TheSession = ""
+    SelfOpenID = ""
+    TheURL = ""
+    #获取请求数据
+    if Success:
+        try:
+            TheSession = request.GET.get("session")
+        except:
+            Success = False
+            Reason = "请求参数不合法！"
+            ErrorId = Constants.ERROR_CODE_INVALID_PARAMETER
+    #判断是否登录，获取待查询的openid
+    if Success:
+        try:
+            SelfOpenID = DatabaseUserManager.GetCurrentUser(TheSession)
+            if SelfOpenID == None:
+                Success = False
+                Reason = "用户未登录！"
+                ErrorId = Constants.ERROR_CODE_LOGIN_ERROR
+        except:
+            Success = False
+            Reason = "用户未登录！"
+            ErrorId = Constants.ERROR_CODE_LOGIN_ERROR
+
+    #调用数据库函数进行操作
+    if Success:
+        try:
+            RequestBody = json.loads(request.body)
+            TheURL = RequestBody["avatarUrl"]
+        except:
+            Success = False
+            Reason = "请求参数不合法！"
+            ErrorId = Constants.ERROR_CODE_INVALID_PARAMETER
+    if Success:
+        try:
+            if DatabaseUserManager.SetAvatarURL(SelfOpenID, TheURL) != True:
+                Success = False
+                Reason = "设置头像url失败！"
+                ErrorId = Constants.ERROR_CODE_UNKNOWN
+        except:
+            Success = False
+            Reason = "设置头像url失败！"
+            ErrorId = Constants.ERROR_CODE_UNKNOWN
+    if Success:
+        Return["result"] = "success"
+    else:
+        Return["errid"] = ErrorID
+        Return["errmsg"] = Reason
+    Response = JsonResponse(Return)
+    if Success == True:
+        Response.status_code = 200
+    else:
+        Response.status_code = 400
+    return Response 
 
 def QueryUser(request):
     '''

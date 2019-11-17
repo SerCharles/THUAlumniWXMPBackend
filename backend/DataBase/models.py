@@ -13,6 +13,7 @@ class User(models.Model):
     Session = models.CharField(max_length = 100)
     SessionKey = models.CharField(max_length = 300)
     RequestID = models.CharField(max_length = 300)
+    AvatarURL = models.CharField(max_length = 300)
 
 class Education(models.Model):
     ID = models.AutoField(primary_key = True)
