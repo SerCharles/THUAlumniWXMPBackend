@@ -25,6 +25,8 @@ from . import DatabaseActivityManager
 from . import DataBaseGlobalFunctions
 from . import DatabaseJudgeValid
 from . import DatabaseUserManager
+from . import SearchAndRecommend
+
 
 def LoginUser(request):
     '''
@@ -487,10 +489,10 @@ def StartActivity(request):
 
     #调用数据库函数进行操作
     if Success:
-        try:
+        if 1:
             RequestBody = json.loads(request.body)
             Info = DatabaseActivityManager.AddActivity(SelfOpenID, RequestBody)
-        except:
+        else:
             Success = False
             Reason = "请求参数不合法！"
             ErrorId = Constants.ERROR_CODE_INVALID_PARAMETER
@@ -1468,3 +1470,216 @@ def QueryDepartments(request):
     else:
         Response.status_code = 400
     return Response  
+
+def SearchActivity(request):
+    '''
+    描述：处理输入关键词搜索活动请求
+    参数：request
+    成功返回活动列表
+    失败则是
+    {
+    "errid":xxx,
+    "errmsg":"xxxx"
+    }
+    '''
+    Success = True
+    Return = {}
+    Info = {}
+    ErrorInfo = {}
+    Reason = ""
+    ErrorID = Constants.UNDEFINED_NUMBER
+    TheSession = ""
+    TheUserID = ""
+    SearchWord = ""
+    #获取请求数据
+    if Success:
+        try:
+            TheSession = request.GET.get("session")
+            SearchWord = request.GET.get("searchWord")
+        except:
+            Success = False
+            Reason = "请求参数不合法！"
+            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+    
+    #判断是否登录，获取待查询的openid
+    if Success:
+        try:
+            TheUserID = DatabaseUserManager.GetCurrentUser(TheSession)
+            if TheUserID == None:
+                Success = False
+                Reason = "用户未登录！"
+                ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+        except:
+            Success = False
+            Reason = "用户未登录！"
+            ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+
+    #调用数据库函数
+    if Success:
+        try:
+            TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
+            RawInfo = TheSearcher.SearchInfo(SearchWord)
+            Info = DatabaseActivityManager.RemoveJoinedActivity(TheUserID, RawInfo)
+            #print(Info)
+            if "activityList" not in Info:
+                Success = False
+                Reason = "搜索活动失败!"
+                ErrorID = Constants.ERROR_CODE_NOT_FOUND
+            elif Info["activityList"] == []:
+                Success = False
+                Reason = "未找到任何符合条件的活动！"
+                ErrorID = Constants.ERROR_CODE_RECOMMEND
+        except:
+            Success = False
+            Reason = "搜索活动失败！"
+            ErrorID = Constants.ERROR_CODE_NOT_FOUND
+
+    if Success:
+        Return = Info
+    else:
+        Return["errid"] = ErrorID
+        Return["errmsg"] = Reason
+    Response = JsonResponse(Return)
+    if Success == True:
+        Response.status_code = 200
+    else:
+        Response.status_code = 400
+    return Response 
+
+def RecommendActivityByActivity(request):
+    '''
+    描述：处理按照活动推荐请求
+    参数：request
+    成功返回活动列表
+    失败则是
+    {
+    "errid":xxx,
+    "errmsg":"xxxx"
+    }
+    '''
+    Success = True
+    Return = {}
+    Info = {}
+    ErrorInfo = {}
+    Reason = ""
+    ErrorID = Constants.UNDEFINED_NUMBER
+    TheSession = ""
+    TheUserID = ""
+    SearchWord = ""
+    TheActivityID = 0
+    #获取请求数据
+    if Success:
+        try:
+            TheSession = request.GET.get("session")
+            TheActivityID = request.GET.get("activityId")
+        except:
+            Success = False
+            Reason = "请求参数不合法！"
+            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+    
+    #判断是否登录，获取待查询的openid
+    if Success:
+        try:
+            TheUserID = DatabaseUserManager.GetCurrentUser(TheSession)
+            if TheUserID == None:
+                Success = False
+                Reason = "用户未登录！"
+                ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+        except:
+            Success = False
+            Reason = "用户未登录！"
+            ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+
+    #调用数据库函数
+    if Success:
+        try:
+            Info, ErrorInfo = DatabaseActivityManager.RecommendActivityByActivity(TheUserID, TheActivityID)
+            #print(Info)
+            if Info == {}:
+                Success = False
+                Reason = ErrorInfo["reason"]
+                ErrorID = ErrorInfo["code"]
+        except:
+            Success = False
+            Reason = "推荐活动失败！"
+            ErrorID = Constants.ERROR_CODE_NOT_FOUND
+
+    if Success:
+        Return = Info
+    else:
+        Return["errid"] = ErrorID
+        Return["errmsg"] = Reason
+    Response = JsonResponse(Return)
+    if Success == True:
+        Response.status_code = 200
+    else:
+        Response.status_code = 400
+    return Response 
+
+def RecommendActivityByUser(request):
+    '''
+    描述：处理按照用户推荐请求
+    参数：request
+    成功返回活动列表
+    失败则是
+    {
+    "errid":xxx,
+    "errmsg":"xxxx"
+    }
+    '''
+    Success = True
+    Return = {}
+    Info = {}
+    ErrorInfo = {}
+    Reason = ""
+    ErrorID = Constants.UNDEFINED_NUMBER
+    TheSession = ""
+    TheUserID = ""
+    SearchWord = ""
+    #获取请求数据
+    if Success:
+        try:
+            TheSession = request.GET.get("session")
+        except:
+            Success = False
+            Reason = "请求参数不合法！"
+            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+    
+    #判断是否登录，获取待查询的openid
+    if Success:
+        try:
+            TheUserID = DatabaseUserManager.GetCurrentUser(TheSession)
+            if TheUserID == None:
+                Success = False
+                Reason = "用户未登录！"
+                ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+        except:
+            Success = False
+            Reason = "用户未登录！"
+            ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+
+    #调用数据库函数
+    if Success:
+        try:
+            Info, ErrorInfo = DatabaseActivityManager.RecommendActivityByUser(TheUserID)
+            #print(Info)
+            if Info == {}:
+                Success = False
+                Reason = ErrorInfo["reason"]
+                ErrorID = ErrorInfo["code"]
+        except:
+            Success = False
+            Reason = "推荐活动失败！"
+            ErrorID = Constants.ERROR_CODE_NOT_FOUND
+
+    if Success:
+        Return = Info
+    else:
+        Return["errid"] = ErrorID
+        Return["errmsg"] = Reason
+    Response = JsonResponse(Return)
+    if Success == True:
+        Response.status_code = 200
+    else:
+        Response.status_code = 400
+    return Response 

@@ -34,7 +34,7 @@ from Alumni.constants import Constants
 from . import DataBaseGlobalFunctions
 from . import DatabaseJudgeValid
 from . import DatabaseUserManager
-
+from . import SearchAndRecommend
 
 def AddActivity(ID, Information):
 	'''
@@ -117,31 +117,34 @@ def AddActivity(ID, Information):
 
 	#获得高级报名信息
 	if Success:
-		try:
+		if "rules" in Information:
+			try:
 			#判断是否合法
-			TheGlobalRule = Information["rules"]["ruleType"]
-			TheJudgeAdvanceRuleResult = DatabaseJudgeValid.JudgeAdvancedRuleValid(Information["rules"])
-			print(TheJudgeAdvanceRuleResult)
-			if TheJudgeAdvanceRuleResult["result"] != "success": 
+				TheGlobalRule = Information["rules"]["ruleType"]
+				TheJudgeAdvanceRuleResult = DatabaseJudgeValid.JudgeAdvancedRuleValid(Information["rules"])
+				print(TheJudgeAdvanceRuleResult)
+				if TheJudgeAdvanceRuleResult["result"] != "success": 
+					Success = False
+					Reason = TheJudgeAdvanceRuleResult["reason"]
+					Code = TheJudgeAdvanceRuleResult["code"]	
+				try:
+					TheAcceptRule = Information["rules"]["accept"]
+				except:
+					TheAcceptRule = []
+				try:
+					TheAuditRule = Information["rules"]["needAudit"]
+				except:
+					TheAuditRule = []
+				try:
+					TheRejectRule = Information["rules"]["reject"]
+				except:
+					TheRejectRule = []
+			except:
 				Success = False
-				Reason = TheJudgeAdvanceRuleResult["reason"]
-				Code = TheJudgeAdvanceRuleResult["code"]	
-			try:
-				TheAcceptRule = Information["rules"]["accept"]
-			except:
-				TheAcceptRule = []
-			try:
-				TheAuditRule = Information["rules"]["needAudit"]
-			except:
-				TheAuditRule = []
-			try:
-				TheRejectRule = Information["rules"]["reject"]
-			except:
-				TheRejectRule = []
-		except:
-			Success = False
-			Reason = "参数不合法，添加活动失败!"
-			Code = Constants.ERROR_CODE_INVALID_PARAMETER	
+				Reason = "参数不合法，添加活动失败!"
+				Code = Constants.ERROR_CODE_INVALID_PARAMETER
+		else:
+			TheGlobalRule = Constants.ADVANCED_RULE_AUDIT	
 	#print(CurTime, StartTime, EndTime, StartSignTime, StopSignTime)
 	#print(Success)
 	#插入数据库
@@ -158,24 +161,27 @@ def AddActivity(ID, Information):
 			GlobalRule = TheGlobalRule)
 			NewActivity.save()
 			ActivityID = NewActivity.ID
+
+			TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
+			TheSearcher.AddOneInfo(ActivityID, TheName)
 		except:
 			Success = False
 			Reason = "参数不合法，添加活动失败!"
 			Code = Constants.ERROR_CODE_INVALID_PARAMETER
 	if Success:
-		try:
+		if "rules" in Information:
+			try:
 			#添加rules
-			for item in TheAcceptRule:
-				#print(item)
-				AddAdvancedRules(ActivityID, item, Constants.ADVANCED_RULE_ACCEPT)
-			for item in TheAuditRule:
-				AddAdvancedRules(ActivityID, item, Constants.ADVANCED_RULE_AUDIT)
-			for item in TheRejectRule:
-				AddAdvancedRules(ActivityID, item, Constants.ADVANCED_RULE_REJECT)
-		except:
-			Success = False
-			Reason = "参数不合法，添加活动失败!"
-			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+				for item in TheAcceptRule:
+					AddAdvancedRules(ActivityID, item, Constants.ADVANCED_RULE_ACCEPT)
+				for item in TheAuditRule:
+					AddAdvancedRules(ActivityID, item, Constants.ADVANCED_RULE_AUDIT)
+				for item in TheRejectRule:
+					AddAdvancedRules(ActivityID, item, Constants.ADVANCED_RULE_REJECT)
+			except:
+				Success = False
+				Reason = "参数不合法，添加活动失败!"
+				Code = Constants.ERROR_CODE_INVALID_PARAMETER
 	#print(Success)
 	#让creator加入活动
 	if Success:
@@ -732,6 +738,10 @@ def DeleteActivity(TheUserID, TheActivityID):
 		TheActivity.Status = Constants.ACTIVITY_STATUS_EXCEPT
 		TheActivity.CanBeSearched = False
 		TheActivity.save()
+
+		TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
+		TheSearcher.DeleteOneInfo(TheActivityID)
+
 	if Success == True:
 		Result["result"] = "success"
 	else:
@@ -823,6 +833,7 @@ def ChangeActivity(TheUserID, Information):
 				ChangeDictionary["rules"] = Information["rules"]
 			else:
 				ChangeDictionary["rules"] = []
+				ChangeDictionary["ruleType"] = TheActivity.GlobalRule
 			ChangeDictionary["curTime"] = DataBaseGlobalFunctions.GetCurrentTime()
 			ChangeDictionary["curUser"] = TheActivity.CurrentUser
 
@@ -884,6 +895,7 @@ def ChangeActivity(TheUserID, Information):
 			Reason = "待修改数据格式不合法"	
 			Code = Constants.ERROR_CODE_INVALID_PARAMETER			
 	#修改
+	#print(Success)
 	if Success:
 		try:
 			TheActivity.Name = ChangeDictionary["name"]
@@ -899,10 +911,15 @@ def ChangeActivity(TheUserID, Information):
 			TheActivity.CanBeSearched = ChangeDictionary["canBeSearched"]
 			TheActivity.GlobalRule = ChangeDictionary["ruleType"]
 			TheActivity.save()
+
+			TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
+			TheSearcher.UpdateOneInfo(Information["id"], TheActivity.Name)
 		except:
 			Success = False
 			Reason = "修改数据失败"
 			Code = Constants.ERROR_CODE_UNKNOWN
+	
+	
 	if Success:
 		try:
 			print(ChangeDictionary["rules"], Information["id"])
@@ -1191,3 +1208,199 @@ def AuditUser(TheManagerID, TheUserID, TheActivityID, WhetherPass):
 		Return["reason"] = Reason
 		Return["code"] = Code
 	return Return
+
+def GetUserActivityWords(TheUserID):
+	'''
+	描述：获取用户参与全部活动的文字
+	参数: 用户id
+	返回：
+	成功：文字描述构成的数组 失败：空
+	'''
+	Success = True
+	TheWordList = []
+	if Success:
+		try:
+			TheUser = User.objects.get(OpenID = TheUserID)
+			TheJoinActivityList = JoinInformation.objects.filter(UserId = TheUser)
+		except:
+			Success = False	
+	if Success:
+		try:
+			for item in TheJoinActivityList:
+				TheResult = {}
+				TheResult = QueryActivity(TheUserID, item.ActivityId.ID)
+				#print(TheResult)
+				if "name" in TheResult:
+					TheWordList.append(TheResult["name"])
+		except:
+			Success = False
+	if Success:
+		return TheWordList
+	else:
+		return []
+
+def RemoveJoinedActivity(TheUserID, TheActivityList):
+	'''
+	描述：移除用户参与过的活动
+	参数: 用户openid，活动列表
+	返回：新的活动列表，失败返回空列表
+	'''
+	Success = True
+	Return = {}
+	NewActivityList = []
+	if Success:
+		try:
+			TheUser = User.objects.get(OpenID = TheUserID)
+		except:
+			Success = False	
+	if Success:
+		try:
+			for item in TheActivityList["activityList"]:
+				TheActivityID = int(item["id"])
+				#print(TheUserID, TheActivityID)
+				if DatabaseJudgeValid.JudgeUserJoinedActivity(TheUserID, TheActivityID) != True:
+					NewActivityList.append(item)
+		except:
+			Success = False
+	if Success:
+		Return["activityList"] = NewActivityList
+	else:
+		Return = {}
+	return Return
+
+def RemoveSelfFromList(TheActivityID, TheActivityList):
+	'''
+	描述：移除活动本身
+	参数: 活动id，活动列表
+	返回：新的活动列表，失败返回空列表
+	'''
+	Success = True
+	Return = {}
+	NewActivityList = []
+	if Success:
+		try:
+			for item in TheActivityList["activityList"]:
+				NewActivityID = int(item["id"])
+				#print(TheUserID, TheActivityID)
+				if int(TheActivityID) != NewActivityID:
+					NewActivityList.append(item)
+		except:
+			Success = False
+	if Success:
+		Return["activityList"] = NewActivityList
+	else:
+		Return = {}
+	return Return
+
+def RecommendActivityByActivity(TheUserID, TheActivityID):
+	'''
+	描述：根据活动推荐其他活动
+	参数: 用户ID，活动id
+	返回：
+	第一个是一个字典，失败为空，成功格式同返回全部活动
+	第二个是错误信息，成功空字典，否则有reason和code
+	'''
+	Result = {}
+	ErrorInfo = {}
+	ReturnInfo = {}
+	BufReturnInfo = {}
+	RawReturnInfo = {}
+	Reason = ""
+	Code = 0
+	Success = True
+	ResultList = []
+	if Success:
+		try:
+			TheActivity = Activity.objects.get(ID = TheActivityID)
+			if TheActivity.CanBeSearched != True:
+				Success = False
+				Reason = "未找到活动！"
+				Code = Constants.ERROR_CODE_NOT_FOUND
+		except:
+			Success = False
+			Reason = "未找到活动！"
+			Code = Constants.ERROR_CODE_NOT_FOUND
+	
+	if Success:
+		try:
+			TheName = TheActivity.Name
+			TheWordList = []
+			TheWordList.append(TheName)
+			TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
+			RawReturnInfo = TheSearcher.Recommend(TheWordList)
+			#print(RawReturnInfo)
+			BufReturnInfo = RemoveJoinedActivity(TheUserID, RawReturnInfo)
+			ReturnInfo = RemoveSelfFromList(TheActivityID, BufReturnInfo)
+			if "activityList" not in ReturnInfo:
+				Success = False
+				Reason = "推荐活动失败！"
+				Code = Constants.ERROR_CODE_UNKNOWN
+			elif ReturnInfo["activityList"] == []:
+				Success = False
+				Reason = "未找到类似的活动，推荐活动失败！"
+				Code = Constants.ERROR_CODE_NOT_FOUND
+		except:
+			Success = False
+			Reason = "推荐活动失败！"
+			Code = Constants.ERROR_CODE_UNKNOWN
+	if Success:
+		Result = ReturnInfo
+		ErrorInfo = {}
+	else:
+		Result = {}
+		ErrorInfo["reason"] = Reason
+		ErrorInfo["code"] = Code
+	return Result, ErrorInfo
+
+def RecommendActivityByUser(TheUserID):
+	'''
+	描述：根据用户推荐其他活动
+	参数: 用户id
+	返回：
+	第一个是一个字典，失败为空，成功格式同返回全部活动
+	第二个是错误信息，成功空字典，否则有reason和code
+	'''
+	Result = {}
+	ErrorInfo = {}
+	RawReturnInfo = {}
+	ReturnInfo = {}
+	Reason = ""
+	Code = 0
+	Success = True
+	ResultList = []
+	if Success:
+		try:
+			TheUser = User.objects.get(OpenID = TheUserID)
+		except:
+			Success = False
+			Reason = "未找到用户！"
+			Code = Constants.ERROR_CODE_NOT_FOUND
+	
+	if Success:
+		try:
+			TheWordList = []
+			TheWordList = GetUserActivityWords(TheUserID)
+			TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
+			RawReturnInfo = TheSearcher.Recommend(TheWordList)
+			ReturnInfo = RemoveJoinedActivity(TheUserID, RawReturnInfo)
+			if "activityList" not in ReturnInfo:
+				Success = False
+				Reason = "推荐活动失败！"
+				Code = Constants.ERROR_CODE_UNKNOWN
+			elif ReturnInfo["activityList"] == []:
+				Success = False
+				Reason = "未找到类似的活动，推荐活动失败！"
+				Code = Constants.ERROR_CODE_NOT_FOUND
+		except:
+			Success = False
+			Reason = "推荐活动失败！"
+			Code = Constants.ERROR_CODE_UNKNOWN
+	if Success:
+		Result = ReturnInfo
+		ErrorInfo = {}
+	else:
+		Result = {}
+		ErrorInfo["reason"] = Reason
+		ErrorInfo["code"] = Code
+	return Result, ErrorInfo
+

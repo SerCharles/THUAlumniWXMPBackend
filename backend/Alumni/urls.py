@@ -21,6 +21,8 @@ from . import DatabaseJudgeValid
 from . import DatabaseUserManager
 from . import RequestHandler
 
+from . import SearchAndRecommend
+WordList = ["校友第一次聚餐活动","校友团体聚会活动","计算机系出游","计算机系软件学院团体聚餐","郊游团建和聚餐","软件学院","计算机系","聚餐","集体聚餐","集体聚餐","集体活动","团队建设"]
 info = {
 "requestId": "4a157c9c-f069-460b-9e89-718b4778942e",
 "user": {
@@ -45,6 +47,8 @@ info = {
 Information = {"name":"第三次瓜分波兰", "place":"华沙", "start":"2019-11-28 08:00:00","end":"2019-11-28 12:00:00", "minUser":"3", "maxUser":"100", "type":"个人活动-聚餐", "status":"1","canBeSearched":"True"}
 NewInformation = {"id":1, "name":"bork", "start":"2019-11-08 08:00:00", "minUser":1, "maxUser":5, "status":2}
 ChangeUserInformation = {"openId":"2017013569", "activityId":1, "newStatus":5, "newRole":0}
+
+
 #DatabaseManager.AddActivity("xxxxx",Information)
 #DatabaseManager.JoinActivity(info["openid"], 1, False)
 #print(DatabaseManager.ShowAllActivity())
@@ -55,6 +59,14 @@ ChangeUserInformation = {"openId":"2017013569", "activityId":1, "newStatus":5, "
 #print(DatabaseManager.ShowAllMembers(1))
 #print(DatabaseManager.ChangeUserStatus("xxxxx", ChangeUserInformation))
 #DataBaseGlobalFunctions.GenerateSessionID()
+
+#SearchAndRecommand.test()
+TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
+#TheSearcher.SearchInfo("校友聚餐")
+#TheSearcher.AddOneInfo(8,"聚餐之王--电子恰猪肉团体聚餐")
+#TheSearcher.DeleteOneInfo(7)
+#TheSearcher.UpdateOneInfo(5,"贵系恰清真饭聚个锤子餐")
+#TheSearcher.SearchInfo("校友聚餐")
 
 urlpatterns = [
     url(r'^login$', RequestHandler.LoginUser),
@@ -77,5 +89,8 @@ urlpatterns = [
     url(r'^activityTypesList$', RequestHandler.QueryActivityTypes),
     url(r'^educationTypesList$', RequestHandler.QueryEducationTypes),
     url(r'^departmentsList$', RequestHandler.QueryDepartments),
+    url(r'^searchActivity$', RequestHandler.SearchActivity),
+    url(r'^recommendByActivity$', RequestHandler.RecommendActivityByActivity),
+    url(r'^recommendByUser$', RequestHandler.RecommendActivityByUser),
 
 ]
