@@ -593,6 +593,77 @@ def JoinActivity(request):
         Response.status_code = 400
     return Response
  
+def QuitActivity(request):
+    '''
+    描述：处理退出活动请求
+    参数：request
+    成功只返回
+    {
+    "result": "success"
+    }   
+    失败则是
+    {
+    "errid":xxx,
+    "errmsg":"xxxx"
+    }
+    '''
+    Success = True
+    Return = {}
+    Reason = ""
+    ErrorID = Constants.UNDEFINED_NUMBER
+    TheSession = ""
+    TheActivity = Constants.UNDEFINED_NUMBER
+    TheUserID = ""
+    TheJoinReason = None
+    #获取请求数据
+    if Success:
+        try:
+            TheSession = request.GET.get("session")
+            TheActivity = int(request.GET.get("activityId"))
+        except:
+            Success = False
+            Reason = "请求参数不合法！"
+            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+
+    #判断是否登录， 获取待查询的openid
+    if Success:
+        try:
+            TheUserID = DatabaseUserManager.GetCurrentUser(TheSession)
+            if TheUserID == None:
+                Success = False
+                Reason = "用户未登录！"
+                ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+        except:
+            Success = False
+            Reason = "用户未登录！"
+            ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+
+    #调用数据库函数删除活动
+    if Success:
+        try:
+            Info = DatabaseActivityManager.QuitActivity(TheUserID, TheActivity)
+            #print(Info)
+            if Info["result"] != "success":
+                Success = False
+                Reason = Info["reason"]
+                ErrorID = Info["code"]
+        except:
+            Success = False
+            Reason = "退出活动失败"
+            ErrorID = Constants.ERROR_CODE_UNKNOWN
+
+    if Success:
+        Return["result"] = "success"
+    else:
+        Return["errid"] = ErrorID
+        Return["errmsg"] = Reason
+    Response = JsonResponse(Return)
+    if Success == True:
+        Response.status_code = 200
+    else:
+        Response.status_code = 400
+    return Response
+
 def GetActivityList(request):
     '''
     描述：处理查询全部活动请求
@@ -674,6 +745,7 @@ def QueryActivity(request):
     Success = True
     Return = {}
     Info = {}
+    SelfInfo = {}
     Reason = ""
     ErrorID = Constants.UNDEFINED_NUMBER
     TheSession = ""
@@ -714,7 +786,22 @@ def QueryActivity(request):
             Success = False
             Reason = "查询活动详情失败！"
             ErrorID = Constants.ERROR_CODE_NOT_FOUND
-
+    if Success:
+        try:
+            SelfInfo, ErrorInfo = DatabaseActivityManager.GetSelfActivityRelation(TheUserID, TheActivity)
+            if SelfInfo == {}:
+                Success = False
+                Reason = ErrorInfo["reason"]
+                ErrorID = ErrorInfo["code"]
+            else:
+                Info["selfStatus"] = SelfInfo["selfStatus"]
+                Info["selfRole"] = SelfInfo["selfRole"]
+                if "ruleForMe" in SelfInfo:
+                    Info["ruleForMe"] = SelfInfo["ruleForMe"]
+        except:
+            Success = False
+            Reason = "查询活动详情失败！"
+            ErrorID = Constants.ERROR_CODE_NOT_FOUND
     if Success:
         Return = Info
     else:

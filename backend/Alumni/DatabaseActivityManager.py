@@ -245,6 +245,49 @@ def AddAdvancedRules(TheActivityID, TheAdvancedRule, TheType):
 			Success = False
 	return Success
 
+def GetSelfActivityRelation(TheUserID, TheActivityID):
+	'''
+	描述：给定用户openid和活动id，判断用户是否参加了这个活动，以及是否能报名参加
+	参数：用户openid，活动id
+	返回：正确：return返回selfstatus，selfrole等,errorinfo为空。错误return为空，errorinfo返回错误id和错误码
+	'''
+	Success = True
+	Return = {}
+	ErrorInfo = {}
+	Code = 0
+	Reason = ""
+	if Success:
+		try:
+			Info = []
+			TheUser = User.objects.get(OpenID = TheUserID)
+			TheActivity = Activity.objects.get(ID = TheActivityID)
+		except:
+			Success = False
+			Code = Constants.ERROR_CODE_NOT_FOUND
+			Reason = "未找到用户或活动！"
+	if Success:
+		try:
+			Info = JoinInformation.objects.get(UserId = TheUser, ActivityId = TheActivity)
+			Return["selfStatus"] = Info.Status
+			Return["selfRole"] = Info.Role
+		except:
+			Return["selfStatus"] = Constants.UNDEFINED_NUMBER
+			Return["selfRole"] = Constants.UNDEFINED_NUMBER
+			WhetherCanJoin = DatabaseJudgeValid.JudgeWhetherCanJoin(TheUserID, TheActivityID)
+			if WhetherCanJoin == Constants.UNDEFINED_NUMBER:
+				Return["ruleForMe"] = "reject"
+			elif WhetherCanJoin == Constants.USER_STATUS_WAITVALIDATE:
+				Return["ruleForMe"] = "needAudit"
+			else:
+				Return["ruleForMe"] = "accept"
+	if Success:
+		ErrorInfo = {}
+	else:
+		Return = {}
+		ErrorInfo["reason"] = Reason
+		ErrorInfo["code"] = Code
+	return Return, ErrorInfo
+
 def QueryActivity(TheUserID, TheActivityID):
 	'''
 	描述：给定活动id，查询活动具体信息
@@ -690,10 +733,16 @@ def JoinActivity(TheUserID, TheActivityID, WhetherCreator, TheJoinReason):
 			if TheStatus == Constants.UNDEFINED_NUMBER:
 				Success = False
 				Reason = "不符合报名条件"
-				Code = Constants.ERROR_CODE_INVALID_CHANGE
+				Code = Constants.ERROR_CODE_REJECT
 			elif TheStatus != Constants.USER_STATUS_WAITVALIDATE:
 				#直接加入，不需要条件
 				TheJoinReason = None
+			else:
+				#待审核没有reason不行
+				if TheJoinReason == None:
+					Success = False
+					Reason = "未输入报名原因！"
+					Code = Constants.ERROR_CODE_NO_REASON
 		#加入
 		#print(TheStatus, Success)
 		if Success:
@@ -703,6 +752,68 @@ def JoinActivity(TheUserID, TheActivityID, WhetherCreator, TheJoinReason):
 			Return["reason"] = Reason
 			Return["code"] = Code
 	#print(Return)
+	return Return
+
+def QuitActivity(TheUserID, TheActivityID):
+	'''
+	描述：退出报名函数	
+	参数：用户id，活动id,是否是管理员,报名原因（没有就是None）
+	返回：成功{result: success}，失败{result：fail，reason：xxx, code:xxx}
+	'''
+	Success = True
+	Reason = ""
+	Return = {}
+	Code = Constants.UNDEFINED_NUMBER
+	TheStatus = -1
+	TheRole = -1
+	if Success:
+		try:
+			TheUser = User.objects.get(OpenID = TheUserID)
+			TheActivity = Activity.objects.get(ID = TheActivityID)
+		except:
+			Success = False
+			Reason = "未找到用户或活动"
+			Code = Constants.ERROR_CODE_NOT_FOUND
+	if Success:
+		try:
+			Info = JoinInformation.objects.get(UserId = TheUser, ActivityId = TheActivity)
+			print(Info)
+		except:
+			Success = False
+			Reason = "用户未加入活动！"
+			Code = Constants.ERROR_CODE_NOT_FOUND
+	if Success:
+		try:
+			TheStatus = Info.Status
+			TheRole = Info.Role
+			if TheRole == Constants.USER_ROLE_CREATOR:
+				Success = False
+				Reason = "创建者不能退出活动！"
+				Code = Constants.ERROR_CODE_INVALID_CHANGE
+			if TheStatus == Constants.USER_STATUS_FINISHED or TheStatus == Constants.USER_STATUS_MISSED:
+				Success = False
+				Reason = "只有待审核用户和正式参与者可以退出活动！"
+				Code = Constants.ERROR_CODE_INVALID_CHANGE
+		except:
+			Success = False
+			Reason = "退出活动失败"
+			Code = Constants.ERROR_CODE_UNKNOWN
+	if Success:
+		try:
+			Info.delete()
+			if TheStatus != Constants.USER_STATUS_WAITVALIDATE:
+				TheActivity.CurrentUser = TheActivity.CurrentUser - 1
+				TheActivity.save()
+		except:
+			Success = False
+			Reason = "退出活动失败"
+			Code = Constants.ERROR_CODE_UNKNOWN
+	if Success:
+		Return["result"] = "success"
+	else:
+		Return["result"] = "fail"
+		Return["reason"] = Reason
+		Return["code"] = Code
 	return Return
 
 def DeleteActivity(TheUserID, TheActivityID):
@@ -1180,10 +1291,7 @@ def AuditUser(TheManagerID, TheUserID, TheActivityID, WhetherPass):
 	if Success:
 		try:
 			if ThePass == 0:
-				TheJoinActivity.Status = Constants.USER_STATUS_MISSED
-				TheJoinActivity.JoinReason = "无"
-				TheJoinActivity.save()
-				#todo:拒绝消息
+				TheJoinActivity.delete()
 			else:
 				if TheActivity.MaxUser != Constants.UNDEFINED_NUMBER and TheActivity.CurrentUser >= TheActivity.MaxUser:
 					Success = False

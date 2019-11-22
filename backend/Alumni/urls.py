@@ -76,6 +76,7 @@ urlpatterns = [
     url(r'^setAvatarUrl$', RequestHandler.SetAvatarURL),
     url(r'^createActivity$', RequestHandler.StartActivity),
     url(r'^joinActivity$', RequestHandler.JoinActivity),
+    url(r'^cancelJoinActivity$', RequestHandler.QuitActivity),
     url(r'^getAllActivity$', RequestHandler.GetActivityList),
     url(r'^getActivityInfo$', RequestHandler.QueryActivity),
     url(r'^getSelfActivity$', RequestHandler.QuerySelfActivity),

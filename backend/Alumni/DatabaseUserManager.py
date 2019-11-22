@@ -54,12 +54,17 @@ def AddUserID(TheOpenID, TheSessionKey, TheSession):
 		TheExistUser.Session = TheSession
 		TheExistUser.SessionKey = TheSessionKey
 		TheExistUser.save()
-		Return["result"] = "exist"
-		Return["session"] = TheSession
-		Return["openId"] = TheOpenID
+		if TheExistUser.Valid == True:
+			Return["result"] = "exist"
+			Return["session"] = TheSession
+			Return["openId"] = TheOpenID
+		else:
+			Return["result"] = "success"
+			Return["session"] = TheSession
+			Return["openId"] = TheOpenID
 	except:
 		User.objects.create(OpenID = TheOpenID, Session = TheSession, SessionKey = TheSessionKey, \
-		Name = "UNDEFINED", RequestID = "UNDEFINED", AvatarURL = "UNDEFINED")
+		Name = "UNDEFINED", RequestID = "UNDEFINED", AvatarURL = "UNDEFINED", Valid = False)
 		Return["result"] = "success"
 		Return["session"] = TheSession
 		Return["openId"] = TheOpenID
@@ -154,6 +159,9 @@ def AddUser(TheInfo):
 			Success = False
 			Reason = "添加用户失败！"
 			Code = Constants.ERROR_CODE_UNKNOWN
+	if Success:
+		NewUser.Valid = True
+		NewUser.save()
 	if Success: 
 		Return["result"] = "success"
 	else:
@@ -202,6 +210,8 @@ def GetCurrentUser(TheSession):
 		try:
 			TheUser = User.objects.get(Session = TheSession)
 			TheUserId = TheUser.OpenID
+			if TheUser.Valid == False:
+				Success = False
 		except:
 			Success = False
 	if Success:

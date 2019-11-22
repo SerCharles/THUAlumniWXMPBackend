@@ -14,6 +14,7 @@ class User(models.Model):
     SessionKey = models.CharField(max_length = 300)
     RequestID = models.CharField(max_length = 300)
     AvatarURL = models.CharField(max_length = 300)
+    Valid = models.BooleanField()
 
 class Education(models.Model):
     ID = models.AutoField(primary_key = True)
