@@ -89,8 +89,8 @@ def JudgeUserJoinedActivity(TheUserID, TheActivityID):
 			TheActivity = Activity.objects.get(ID = TheActivityID)
 			Info = JoinInformation.objects.filter(UserId = TheUser, ActivityId = TheActivity)
 			if len(Info) != 0:
-				if Info.Status != Constants.USER_STATUS_MISSED:
-					Return = True
+				#if Info.Status != Constants.USER_STATUS_MISSED:
+				Return = True
 		except:
 			Success = False
 	if Return == True or Success == False:
