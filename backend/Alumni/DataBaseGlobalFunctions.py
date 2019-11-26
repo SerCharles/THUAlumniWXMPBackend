@@ -41,7 +41,7 @@ def GenerateSessionID():
 	'''
 	while True:
 		length = random.randint(10,50)
-		TheSession =  ''.join(random.sample(string.ascii_letters + string.digits + '!@#$%^&*()', length))
+		TheSession =  ''.join(random.sample(string.ascii_letters + string.digits, length))
 		print(TheSession)
 		try:
 			TheUser = User.objects.get(Session = TheSession)

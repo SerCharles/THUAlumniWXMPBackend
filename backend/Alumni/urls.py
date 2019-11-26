@@ -67,6 +67,7 @@ TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
 #TheSearcher.DeleteOneInfo(7)
 #TheSearcher.UpdateOneInfo(5,"贵系恰清真饭聚个锤子餐")
 #TheSearcher.SearchInfo("校友聚餐")
+#print(DatabaseUserManager.AddUserID("13d","bbb", "bbb"))
 
 urlpatterns = [
     url(r'^login$', RequestHandler.LoginUser),
