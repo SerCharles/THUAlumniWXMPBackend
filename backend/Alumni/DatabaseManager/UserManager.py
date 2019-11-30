@@ -31,10 +31,9 @@ from DataBase.models import AdvancedRule
 from DataBase.models import Department
 from DataBase.models import EducationType
 from DataBase.models import ActivityType
-from Alumni.constants import Constants
-from . import DataBaseGlobalFunctions
-from . import DatabaseJudgeValid
-
+from Alumni.LogicManager.Constants import Constants
+from Alumni.LogicManager import GlobalFunctions
+from Alumni.LogicManager import JudgeValid
 
 
 def AddUserID(TheOpenID, TheSessionKey, TheSession):
@@ -192,15 +191,15 @@ def AddEducation(TheEducation, ID):
 			TheUser = User.objects.get(OpenID = ID)
 			Education.objects.create(StartYear = TheStartYear, Department = TheDepartment, Type = TheType, Student = TheUser)
 			#如果有数据库中不存在的教育信息，插入
-			DataBaseGlobalFunctions.AddEducationType(TheType)
-			DataBaseGlobalFunctions.AddDepartment(TheDepartment)
+			GlobalFunctions.AddEducationType(TheType)
+			GlobalFunctions.AddDepartment(TheDepartment)
 		except:
 			Success = False
 	return Success
 
 def GetCurrentUser(TheSession):
 	'''
-	描述：给定session，获得当前用户OpenID
+	描述：给定session，获得当前用户OpenID--用于判断登录
 	参数：session
 	返回：用户OpenID，如果没有返回None
 	'''
@@ -218,6 +217,40 @@ def GetCurrentUser(TheSession):
 		return TheUserId
 	else:
 		return None
+
+def GetCurrentUserInQueryUser(TheSession):
+	'''
+	描述：给定session，获得当前用户OpenID--用于判断登录,仅用于获取用户信息时
+	参数：session
+	返回：{result：success/fail} 
+	如果成功，带一个字段：openId
+	如果失败，带字段：reason，code
+	'''
+	Success = True
+	Reason = ""
+	Code = 0
+	TheUserId = ""
+	Return = {}
+	if Success:
+		try:
+			TheUser = User.objects.get(Session = TheSession)
+			TheUserId = TheUser.OpenID
+			if TheUser.Valid == False:
+				Success = False
+				Reason = "用户没有用户信息，可能是回调接口未即时返回"
+				Code = Constants.ERROR_CODE_NOT_STORED
+		except:
+			Success = False
+			Reason = "用户未登录！"
+			Code = Constants.ERROR_CODE_LOGIN_ERROR
+	if Success:
+		Return["result"] = "success"
+		Return["openId"] = TheUserId
+	else:
+		Return["result"] = "fail"
+		Return["reason"] = Reason
+		Return["code"] = Code
+	return Return
 
 def QueryUser(ID):
 	'''
