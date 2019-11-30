@@ -24,15 +24,16 @@ class Education(models.Model):
     Type = models.CharField(max_length = 30)
 
 class Activity(models.Model):
-    STATUS_TYPE_ACTIVITY = (
+    STATUS_TYPE_GLOBAL_ACTIVITY = (
         (0,'Except'),
-        (1,'BeforeSignup'),
-        (2,'Signup'),
-        (3,'SignupPaused'),
-        (4,'SignupStopped'),
-        (5,'Signin'),
-        (6,'SigninPaused'),
-        (7,'Finish'),
+        (1,'Normal'),
+        (2,'Finish'),
+    )
+    STATUS_TYPE_JOIN_CHECK_ACTIVITY = (
+        (0,'Before'),
+        (1,'Continue'),
+        (2,'Paused'),
+        (3,'Stopped'),
     )
     RULE_TYPE_ACTIVITY = (
         (0, "Accept"),
@@ -51,9 +52,13 @@ class Activity(models.Model):
     CurrentUser = models.IntegerField()
     MaxUser = models.IntegerField()
     Type = models.CharField(max_length = 100)
-    Status = models.IntegerField(choices = STATUS_TYPE_ACTIVITY)
+    StatusGlobal = models.IntegerField(choices = STATUS_TYPE_GLOBAL_ACTIVITY)
+    StatusJoin = models.IntegerField(choices = STATUS_TYPE_JOIN_CHECK_ACTIVITY)
+    StatusCheck = models.IntegerField(choices = STATUS_TYPE_JOIN_CHECK_ACTIVITY)
     CanBeSearched = models.BooleanField()
     GlobalRule = models.IntegerField(choices = RULE_TYPE_ACTIVITY)
+    Tags = models.CharField(max_length = 300)
+    Description = models.TextField()
 
 class AdvancedRule(models.Model):
     RULE_TYPE = (
@@ -73,13 +78,14 @@ class JoinInformation(models.Model):
     STATUS_TYPE_JOIN = (
         (0, "WaitValidate"),  
         (1, "Joined"),
-        (2, "NotChecked"),
-        (3, "Checked"),
-        (4, "Finished"),
-        (5, "Missed"),
+        (2, "Checked"),
+        (3, "Finished"),
+        (4, "FinishedWithoutCheck"),
+        (5, "Abnormal"),
+        (6, "Refused"),
     )
     ROLE_TYPE_JOIN = (
-        (0, "Common"),
+        (0, "Commoner"),
         (1, "Manager"),
         (2, "Creator") 
     )

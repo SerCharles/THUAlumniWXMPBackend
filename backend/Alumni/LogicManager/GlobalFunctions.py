@@ -30,25 +30,9 @@ from DataBase.models import AdvancedRule
 from DataBase.models import Department
 from DataBase.models import EducationType
 from DataBase.models import ActivityType
-from Alumni.constants import Constants
+from Alumni.LogicManager.Constants import Constants
 
-
-def GenerateSessionID():
-	'''
-	描述：生成随机session
-	参数：无
-	返回：session
-	'''
-	while True:
-		length = random.randint(10,50)
-		TheSession =  ''.join(random.sample(string.ascii_letters + string.digits, length))
-		print(TheSession)
-		try:
-			TheUser = User.objects.get(Session = TheSession)
-		except:
-			break
-	return TheSession
-
+#时间相关函数
 def TimeStringToTimeStamp(TimeString):
 	'''
 	描述：时间字符串转化为时间戳（秒）
@@ -77,6 +61,57 @@ def GetCurrentTime():
     '''
 	CurTime = int(time.time())
 	return CurTime
+
+def JudgeWhetherDayEnd():
+	'''
+	功能：判断当时是否是一天23点59分
+	参数：无
+	返回：True是，False否
+    '''
+	CurTime = int(time.time())
+	TimeArray = time.localtime(CurTime) 
+	TimeString = time.strftime("%Y-%m-%d %H:%M:%S", TimeArray)
+	print(TimeString[-8:-3])
+	if TimeString[-8:-3] == "23:59":
+		return True
+	else:
+		return False
+
+def JudgeWhetherSameDay(TimeStamp):
+	'''
+	功能：在23：59判断是否某时间在当天
+	参数：待判断时间戳
+	返回：True是，False否
+    '''
+	CurTime = int(time.time())
+	if CurTime + 60 >= TimeStamp and CurTime - TimeStamp < 86400:
+		return True
+	else:
+		return False
+
+def JudgeWhetherSameMinute(TimeStamp):
+	CurTime = int(time.time())
+	if CurTime >= TimeStamp and CurTime - TimeStamp < 60:
+		return True
+	else:
+		return False
+
+#登录相关函数
+def GenerateSessionID():
+	'''
+	描述：生成随机session
+	参数：无
+	返回：session
+	'''
+	while True:
+		length = random.randint(10,50)
+		TheSession =  ''.join(random.sample(string.ascii_letters + string.digits, length))
+		#print(TheSession)
+		try:
+			TheUser = User.objects.get(Session = TheSession)
+		except:
+			break
+	return TheSession
 
 def GetAppIDWechat():
 	'''
@@ -108,6 +143,7 @@ def GetAppIDThis():
 		Return = {}
 	return Return
 
+#院系，活动类型，教育类型相关函数
 def AddDepartment(TheDepartment):
 	'''
 	描述：如果院系不存在，就添加一个
@@ -261,6 +297,26 @@ def ShowAllActivityType():
 		Return = {}
 	return Return
 
+def MergeTags(TheTagList):
+	'''
+	描述：将标签合并到一起存储，不同标签用英文逗号切分
+	参数：标签列表
+	返回：合并的标签
+	'''
+	TheTag = ""
+	for i in range(len(TheTagList)):
+		TheTag += TheTagList[i]
+		if i != len(TheTagList) - 1:
+			TheTag += ','
+	return TheTag
+
+def SplitTags(TheTag):
+	'''
+	描述：将合并到一起存储的标签切分
+	参数：合并的标签
+	返回：标签列表
+	'''
+	return TheTag.split(',')
 
 
 

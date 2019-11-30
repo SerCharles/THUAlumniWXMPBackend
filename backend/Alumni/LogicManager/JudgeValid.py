@@ -30,9 +30,10 @@ from DataBase.models import AdvancedRule
 from DataBase.models import Department
 from DataBase.models import EducationType
 from DataBase.models import ActivityType
-from Alumni.constants import Constants
-from . import DataBaseGlobalFunctions
+from Alumni.LogicManager.Constants import Constants
+from Alumni.LogicManager import GlobalFunctions
 
+#院系，活动类型，教育类型等合法性判定
 def JudgeDepartmentValid(TheDepartment):
 	'''
 	描述：判断院系名称是否合法
@@ -73,12 +74,108 @@ def JudgeEducationTypeValid(TheType):
 		Success = False
 	return Success
 
+#活动状态判断
+def JudgeActivityCanBeSearched(TheActivityID):
+	'''
+	描述：判断一个活动是否可见---仅用于列表返回和搜索
+	是True，不是或失败False
+	'''
+	try:
+		TheActivity = Activity.objects.get(ID = TheActivityID)
+		if TheActivity.CanBeSearched == True and TheActivity.StatusGlobal != Constants.ACTIVITY_STATUS_GLOBAL_EXCEPT:
+			return True
+		else:
+			return False
+	except:
+		return False
 
+def JudgeActivityNormal(TheActivityID):
+	'''
+	描述：判断一个活动是否在正常状态（不能是结束或者异常）
+	参数：活动ID
+	返回：是True，不是或失败False
+	'''
+	Success = True
+	if Success:
+		try:
+			TheActivity = Activity.objects.get(ID = TheActivityID)
+			if TheActivity.StatusGlobal == Constants.ACTIVITY_STATUS_GLOBAL_NORMAL:
+				Success = True
+			else:
+				Success = False
+		except:
+			Success = False
+	return Success
+
+def JudgeActivityCanJoin(TheActivityID):
+	'''
+	描述：判断一个活动是否可以报名（不能是结束或者异常）
+	参数：活动ID
+	返回：是True，不是或失败False
+	'''
+	Success = True
+	if Success:
+		try:
+			TheActivity = Activity.objects.get(ID = TheActivityID)
+			if TheActivity.StatusGlobal == Constants.ACTIVITY_STATUS_GLOBAL_NORMAL \
+			and TheActivity.StatusJoin == Constants.ACTIVITY_STATUS_JOIN_CONTINUE:
+				Success = True
+			else:
+				Success = False
+		except:
+			Success = False
+	return Success
+
+def JudgeActivityCanCheck(TheActivityID):
+	'''
+	描述：判断一个活动是否可以签到（不能是结束或者异常）
+	参数：活动ID
+	返回：是True，不是或失败False
+	'''
+	Success = True
+	if Success:
+		try:
+			TheActivity = Activity.objects.get(ID = TheActivityID)
+			if TheActivity.StatusGlobal == Constants.ACTIVITY_STATUS_GLOBAL_NORMAL \
+			and TheActivity.StatusCheck == Constants.ACTIVITY_STATUS_CHECK_CONTINUE:
+				Success = True
+			else:
+				Success = False
+		except:
+			Success = False
+	return Success
+
+def JudgeActivityStatusChangeValid(OldStatus, NewStatus):
+	'''
+	描述：判断一个活动状态变更是否合理---用户接口
+	参数：旧新状态
+	返回：{result：success}/{result：fail，reason：xxx}
+	合理：
+	状态只有正常之间可以任意变化，其余都8行
+	0状态必定不可见
+	'''
+	Success = True
+	Return = {}
+	Reason = ""
+	if Success:
+		if OldStatus == Constants.ACTIVITY_STATUS_GLOBAL_NORMAL and NewStatus == Constants.ACTIVITY_STATUS_GLOBAL_NORMAL:
+			Success = True
+		else:
+			Success = False
+			Reason = "状态修改不合法，用户只能在活动正常状态间修改活动状态"
+	if Success == True:
+		Return["result"] = "success"
+	else:
+		Return["result"] = "fail"
+		Return["reason"] = Reason
+	return Return
+
+#用户-活动状态判断
 def JudgeUserJoinedActivity(TheUserID, TheActivityID):
 	'''
 	描述：给定用户openid和活动id，判断用户是否参加了这个活动
 	参数：用户openid，活动id
-	返回：已参加或失败：True，未参加：False
+	返回：未参加或被拒绝：返回False，其余True
 	'''
 	Success = True
 	Return = False
@@ -87,16 +184,11 @@ def JudgeUserJoinedActivity(TheUserID, TheActivityID):
 			Info = []
 			TheUser = User.objects.get(OpenID = TheUserID)
 			TheActivity = Activity.objects.get(ID = TheActivityID)
-			Info = JoinInformation.objects.filter(UserId = TheUser, ActivityId = TheActivity)
-			if len(Info) != 0:
-				#if Info.Status != Constants.USER_STATUS_MISSED:
-				Return = True
+			Info = JoinInformation.objects.get(UserId = TheUser, ActivityId = TheActivity)
+			if Info.Status != Constants.USER_STATUS_REFUSED:
+				return True
 		except:
-			Success = False
-	if Return == True or Success == False:
-		return True
-	else:
-		return False
+			return False
 
 def JudgeWhetherManager(TheUserID, TheActivityID):
 	'''
@@ -110,8 +202,8 @@ def JudgeWhetherManager(TheUserID, TheActivityID):
 			Info = []
 			TheUser = User.objects.get(OpenID = TheUserID)
 			TheActivity = Activity.objects.get(ID = TheActivityID)
-			Info = JoinInformation.objects.filter(UserId = TheUser, ActivityId = TheActivity)
-			if Info[0].Role == Constants.USER_ROLE_CREATOR or Info[0].Role == Constants.USER_ROLE_MANAGER:
+			Info = JoinInformation.objects.get(UserId = TheUser, ActivityId = TheActivity)
+			if Info.Role == Constants.USER_ROLE_CREATOR or Info.Role == Constants.USER_ROLE_MANAGER:
 				Return = True
 		except:
 			Success = False
@@ -120,20 +212,63 @@ def JudgeWhetherManager(TheUserID, TheActivityID):
 	else:
 		return False
 
-def JudgeCanBeSeen(TheActivityID):
+def JudgeWhetherCreator(TheUserID, TheActivityID):
 	'''
-	描述：判断一个活动是否可见
+	描述：判断一个用户是否是活动创建者
 	是True，不是或失败False
 	'''
-	try:
-		TheActivity = Activity.objects.get(ID = TheActivityID)
-		if TheActivity.CanBeSearched == True:
-			return True
-		else:
-			return False
-	except:
+	Success = True
+	Return = False
+	if Success:
+		try:
+			Info = []
+			TheUser = User.objects.get(OpenID = TheUserID)
+			TheActivity = Activity.objects.get(ID = TheActivityID)
+			Info = JoinInformation.objects.get(UserId = TheUser, ActivityId = TheActivity)
+			if Info.Role == Constants.USER_ROLE_CREATOR:
+				Return = True
+		except:
+			Success = False
+	if Return == True and Success == True:
+		return True
+	else:
 		return False
 
+def JudgeUserStatusJoined(TheStatus):
+	'''
+	描述：判断一个用户是否已加入活动（不能是待审核，被拒绝，异常）
+	参数：状态
+	返回：是True，不是False
+	'''
+	if TheStatus in [Constants.USER_STATUS_JOINED, Constants.USER_STATUS_CHECKED,\
+	 Constants.USER_STATUS_FINISHED, Constants.USER_STATUS_FINISHED_WITHOUT_CHECK]:
+		return True
+	else:
+		return False
+
+def JudgeUserStatusDoingActivity(TheStatus):
+	'''
+	描述：判断一个用户是否正在参与（只能已加入或者已签到）
+	参数：状态
+	返回：是True，不是False
+	'''
+	if TheStatus in [Constants.USER_STATUS_JOINED, Constants.USER_STATUS_CHECKED]:
+		return True
+	else:
+		return False
+
+def JudgeUserStatusCanQuit(TheStatus):
+	'''
+	描述：判断一个用户是否可以退出活动（不能是被拒绝，异常，结束）
+	参数：状态
+	返回：是True，不是False
+	'''
+	if TheStatus in [Constants.USER_STATUS_JOINED, Constants.USER_STATUS_CHECKED, Constants.USER_STATUS_WAITVALIDATE]:
+		return True
+	else:
+		return False
+
+#普通参数合理性判断
 def JudgeParameterValid(CurTime, StartTime, EndTime, StartSignTime, StopSignTime, CurUser, MinUser, MaxUser):
 	'''
 	描述：判断一个活动时间和人员情况是否合理
@@ -165,9 +300,9 @@ def JudgeParameterValid(CurTime, StartTime, EndTime, StartSignTime, StopSignTime
 		Success = False
 		Reason = "结束报名时间应该小于等于结束时间！"
 	if MaxUser != Constants.UNDEFINED_NUMBER:
-		if MaxUser < 3:
+		if MaxUser < Constants.MIN_MAX_USER:
 			Success = False
-			Reason = "最大人数应该大于等于3！"
+			Reason = "最大人数应该大于等于" + str(Constants.MIN_MAX_USER)+ "!"
 		if MinUser > MaxUser:
 			Success = False
 			Reason = "最小人数应该小于等于最大人数！"
@@ -181,47 +316,20 @@ def JudgeParameterValid(CurTime, StartTime, EndTime, StartSignTime, StopSignTime
 		Return["reason"] = Reason
 	return Return
 
-def JudgeStatusChangeValid(OldStatus, NewStatus, OldCanSee, NewCanSee):
+def JudgeTagListValid(TheList):
 	'''
-	描述：判断一个状态和可见变更是否合理
-	参数：旧新状态，可见性
-	返回：{result：success}/{result：fail，reason：xxx}
-	合理：
-	0不能修改到其余状态
-	1-7中，只有修改到0,3->2, 6->5这三个大号到小号的变更合理，其余不合理
-	0状态必定不可见
+	描述：判断一个标签数组是否合法
+	参数：标签数组
+	返回：合法True，不合法False
+	不合法：有英文逗号
 	'''
-	Success = True
-	Return = {}
-	Reason = ""
-	try:
-		if Success == True:
-			if OldStatus == Constants.ACTIVITY_STATUS_EXCEPT and NewStatus != Constants.ACTIVITY_STATUS_EXCEPT:
-				Success = False
-				Reason = "活动已经被删除或封杀！"
-		if Success == True:
-			if OldStatus > NewStatus and NewStatus != Constants.ACTIVITY_STATUS_EXCEPT:
-				if OldStatus == Constants.ACTIVITY_STATUS_SIGNINPAUSED and NewStatus == Constants.ACTIVITY_STATUS_SIGNIN:
-					Success = True
-				elif OldStatus == Constants.ACTIVITY_STATUS_SIGNUPPAUSED and NewStatus == Constants.ACTIVITY_STATUS_SIGNUP:
-					Success = True
-				else:
-					Success = False
-					Reason = "状态修改的时间顺序有误！"
-		if Success == True:
-			if NewStatus == Constants.ACTIVITY_STATUS_EXCEPT and NewCanSee == True:
-				Success = False
-				Reason = "活动被删除或被审核，不能显示其信息！"
-	except:
-		Success = False
-		Reason = "参数非法！"
-	if Success == True:
-		Return["result"] = "success"
-	else:
-		Return["result"] = "fail"
-		Return["reason"] = Reason
-	return Return
+	for item in TheList:
+		for one in item:
+			if one == ',':
+				return False
+	return True
 
+#高级报名合理性判断
 def JudgeSingleRuleValid(TheRule):
 	'''
 	描述：判断一条高级报名规则是否合法
@@ -344,7 +452,7 @@ def JudgeRuleMatch(TheRule, TheEducation):
 	TypeCollide = False
 	DepartmentCollide = False
 	TimeCollide = False
-	print(TheRule, TheEducation)
+	#print(TheRule, TheEducation)
 	TheRuleType = TheRule.EducationType
 	if TheRule.EducationType == "UNDEFINED":
 		TheRuleType = None
@@ -461,7 +569,7 @@ def JudgeAdvancedRuleValid(Rule):
 		Return["code"] = Code
 	return Return
 
-def JudgeWhetherCanJoin(TheUserID, TheActivityID):
+def JudgeWhetherCanJoinAdvanced(TheUserID, TheActivityID):
 	'''
 	描述：判断高级报名是否成功，以及成功后结果
 	参数：用户和活动ID

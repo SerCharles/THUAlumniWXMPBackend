@@ -1,28 +1,9 @@
-"""Alumni URL Configuration
+'''
+url绑定函数和初始化
+'''
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/2.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-from django.contrib import admin
-from django.conf.urls import url
-from . import DatabaseActivityManager
-from . import DataBaseGlobalFunctions
-from . import DatabaseJudgeValid
-from . import DatabaseUserManager
-from . import RequestHandler
 
-from . import SearchAndRecommend
-WordList = ["校友第一次聚餐活动","校友团体聚会活动","计算机系出游","计算机系软件学院团体聚餐","郊游团建和聚餐","软件学院","计算机系","聚餐","集体聚餐","集体聚餐","集体活动","团队建设"]
+'''WordList = ["校友第一次聚餐活动","校友团体聚会活动","计算机系出游","计算机系软件学院团体聚餐","郊游团建和聚餐","软件学院","计算机系","聚餐","集体聚餐","集体聚餐","集体活动","团队建设"]
 info = {
 "requestId": "4a157c9c-f069-460b-9e89-718b4778942e",
 "user": {
@@ -61,38 +42,69 @@ ChangeUserInformation = {"openId":"2017013569", "activityId":1, "newStatus":5, "
 #DataBaseGlobalFunctions.GenerateSessionID()
 
 #SearchAndRecommand.test()
-TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
 #TheSearcher.SearchInfo("校友聚餐")
 #TheSearcher.AddOneInfo(8,"聚餐之王--电子恰猪肉团体聚餐")
 #TheSearcher.DeleteOneInfo(7)
 #TheSearcher.UpdateOneInfo(5,"贵系恰清真饭聚个锤子餐")
 #TheSearcher.SearchInfo("校友聚餐")
-#print(DatabaseUserManager.AddUserID("13d","bbb", "bbb"))
+#print(DatabaseUserManager.AddUserID("13d","bbb", "bbb"))'''
+
+
+from django.contrib import admin
+from django.conf.urls import url
+from Alumni.LogicManager.Constants import Constants
+from Alumni.LogicManager import GlobalFunctions
+from Alumni.LogicManager import JudgeValid
+from Alumni.DatabaseManager import UserManager
+from Alumni.DatabaseManager import ActivityManager
+from Alumni.DatabaseManager import UserActivityManager
+from Alumni.DatabaseManager import SearchAndRecommend
+from Alumni.RequestHandler import UserHandler
+from Alumni.RequestHandler import ActivityHandler
+from Alumni.RequestHandler import UserActivityHandler
+from Alumni.RequestHandler import SearchHandler
+from Alumni.RequestHandler import OtherHandler
+
+TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
 
 urlpatterns = [
-    url(r'^login$', RequestHandler.LoginUser),
-    url(r'^alumniCheck$', RequestHandler.GetAlumniInfo),
-    url(r'^qhrcallback$', RequestHandler.ReceiveAlunmiInfo),
-    url(r'^userData$', RequestHandler.QueryUser),
-    url(r'^setAvatarUrl$', RequestHandler.SetAvatarURL),
-    url(r'^createActivity$', RequestHandler.StartActivity),
-    url(r'^joinActivity$', RequestHandler.JoinActivity),
-    url(r'^cancelJoinActivity$', RequestHandler.QuitActivity),
-    url(r'^getAllActivity$', RequestHandler.GetActivityList),
-    url(r'^getActivityInfo$', RequestHandler.QueryActivity),
-    url(r'^getSelfActivity$', RequestHandler.QuerySelfActivity),
-    url(r'^getAllParticipants$', RequestHandler.QueryAllParticipants),
-    url(r'^getAllParticipantsAdmin$', RequestHandler.QueryAllParticipantsAdmin),
-    url(r'^needReview$', RequestHandler.QueryAllAuditParticipants),
-    url(r'^modifyActivity$', RequestHandler.ChangeActivity),
-    url(r'^changeUserRole$', RequestHandler.ChangeUserStatus),
-    url(r'^handleAudit$', RequestHandler.AuditUser),
-    url(r'^deleteActivity$', RequestHandler.DeleteActivity),
-    url(r'^activityTypesList$', RequestHandler.QueryActivityTypes),
-    url(r'^educationTypesList$', RequestHandler.QueryEducationTypes),
-    url(r'^departmentsList$', RequestHandler.QueryDepartments),
-    url(r'^searchActivity$', RequestHandler.SearchActivity),
-    url(r'^recommendByActivity$', RequestHandler.RecommendActivityByActivity),
-    url(r'^recommendByUser$', RequestHandler.RecommendActivityByUser),
+    #处理用户请求url
+    url(r'^login$', UserHandler.LoginUser),
+    url(r'^alumniCheck$', UserHandler.GetAlumniInfo),
+    url(r'^qhrcallback$', UserHandler.ReceiveAlunmiInfo),
+    url(r'^userData$', UserHandler.QueryUser),
+    url(r'^setAvatarUrl$', UserHandler.SetAvatarURL),
 
+    #处理活动请求url
+    url(r'^createActivity$', ActivityHandler.StartActivity),
+    url(r'^modifyActivity$', ActivityHandler.ChangeActivity),
+    url(r'^modifyActivityDescription$', ActivityHandler.ChangeActivityDetail),
+    url(r'^getAllActivity$', ActivityHandler.GetActivityList),
+    url(r'^getActivityInfo$', ActivityHandler.QueryActivity),
+    url(r'^getActivityDescription$', ActivityHandler.QueryActivityDetail),
+    url(r'^deleteActivity$', ActivityHandler.DeleteActivity),
+    url(r'^changeActivityByTime$', ActivityHandler.ChangeActivityByTime),
+
+    #处理用户-活动请求url
+    url(r'^joinActivity$', UserActivityHandler.JoinActivity),
+    url(r'^checkInActivity$', UserActivityHandler.CheckInActivity),
+    url(r'^removeFromActivity$', UserActivityHandler.RemoveFromActivity),
+    url(r'^cancelJoinActivity$', UserActivityHandler.QuitActivity),
+    url(r'^getSelfActivity$', UserActivityHandler.QuerySelfActivity),
+    url(r'^getAllParticipants$', UserActivityHandler.QueryAllParticipants),
+    url(r'^getAllParticipantsAdmin$', UserActivityHandler.QueryAllParticipantsAdmin),
+    url(r'^needReview$', UserActivityHandler.QueryAllAuditParticipants),
+    url(r'^changeUserRole$', UserActivityHandler.ChangeUserRole),
+    url(r'^handleAudit$', UserActivityHandler.AuditUser),
+
+
+    #处理搜索-推荐请求url
+    url(r'^searchActivity$', SearchHandler.SearchActivity),
+    url(r'^recommendByActivity$', SearchHandler.RecommendActivityByActivity),
+    url(r'^recommendByUser$', SearchHandler.RecommendActivityByUser),
+
+    #处理其余url
+    url(r'^activityTypesList$', OtherHandler.QueryActivityTypes),
+    url(r'^educationTypesList$', OtherHandler.QueryEducationTypes),
+    url(r'^departmentsList$', OtherHandler.QueryDepartments),
 ]
