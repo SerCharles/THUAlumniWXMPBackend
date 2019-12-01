@@ -106,7 +106,7 @@ def ShowSelfActivity(TheUserID):
 		try:
 			for item in TheJoinActivityList:
 				TheResult = {}
-				TheResult = ActivityManager.QueryActivity(TheUserID, item.ActivityId.ID)
+				TheResult = ActivityManager.QueryActivity(item.ActivityId.ID)
 				if TheResult == {}:
 					continue
 				TheResult["id"] = item.ActivityId.ID

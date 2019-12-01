@@ -121,10 +121,20 @@ def GetActivityList(request):
     ErrorID = Constants.UNDEFINED_NUMBER
     TheSession = ""
     TheUserID = ""
+    TheLastID = Constants.UNDEFINED_NUMBER
+    TheMostNumber = Constants.UNDEFINED_NUMBER
     #获取请求数据
     if Success:
         try:
             TheSession = request.GET.get("session")
+            try:
+                TheLastID = int(request.GET.get("lastSeenId"))
+            except:
+                TheLastID = Constants.UNDEFINED_NUMBER
+            try:
+                TheMostNumber = int(request.GET.get("most"))
+            except:
+                TheMostNumber = Constants.UNDEFINED_NUMBER
         except:
             Success = False
             Reason = "请求参数不合法！"
@@ -146,7 +156,7 @@ def GetActivityList(request):
     #调用数据库函数
     if Success:
         try:
-            Info, ErrorInfo = ActivityManager.ShowAllActivity()
+            Info, ErrorInfo = ActivityManager.ShowAllActivity(TheLastID, TheMostNumber)
             #print(Info)
             if Info == {}:
                 Success = False
@@ -184,6 +194,7 @@ def QueryActivity(request):
     Return = {}
     Info = {}
     SelfInfo = {}
+    ErrorInfo = {}
     Reason = ""
     ErrorID = Constants.UNDEFINED_NUMBER
     TheSession = ""
@@ -215,11 +226,11 @@ def QueryActivity(request):
     #调用数据库函数
     if Success:
         try:
-            Info = ActivityManager.QueryActivity(TheUserID, TheActivity)
+            Info, ErrorInfo = ActivityManager.ShowOneActivity(TheUserID, TheActivity)
             if Info == {}:
                 Success = False
-                Reason = "未找到活动！"
-                ErrorID = Constants.ERROR_CODE_NOT_FOUND
+                Reason = ErrorInfo["reason"]
+                ErrorID = ErrorInfo["code"]
         except:
             Success = False
             Reason = "查询活动详情失败！"
