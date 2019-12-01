@@ -317,10 +317,10 @@ def AddAdvancedRules(TheActivityID, TheAdvancedRule, TheType):
 			Success = False
 	return Success
 
-def QueryActivity(TheUserID, TheActivityID):
+def QueryActivity(TheActivityID):
 	'''
-	描述：给定活动id，查询活动具体信息
-	参数：用户openid，活动id
+	描述：给定活动id，查询活动基本信息
+	参数：活动id
 	返回：一个字典，里面有活动各种信息
 	如果没有就返回空字典
 	'''
@@ -329,7 +329,6 @@ def QueryActivity(TheUserID, TheActivityID):
 	if Success:
 		try:
 			Info = Activity.objects.get(ID = TheActivityID)
-			TheJoinActivityList = JoinInformation.objects.filter(ActivityId = Info)
 			Result["name"] = Info.Name
 			Result["place"] = Info.Place
 			Result["createTime"] = GlobalFunctions.TimeStampToTimeString(int(Info.CreateTime))
@@ -344,8 +343,91 @@ def QueryActivity(TheUserID, TheActivityID):
 			Result["statusGlobal"] = int(Info.StatusGlobal)
 			Result["statusJoin"] = int(Info.StatusJoin)
 			Result["statusCheck"] = int(Info.StatusCheck)
-			Result["participants"] = []
 			Result["tags"] = GlobalFunctions.SplitTags(Info.Tags)
+		except:
+			Success = False
+	if Success == False:
+		Result = {}
+	return Result
+
+def ShowAllAdvancedRules(TheActivityID):
+	'''
+	描述：给定活动id，查询活动高级报名信息
+	参数：活动id
+	返回：一个字典，里面有高级报名信息的三个数组
+	如果没有就返回空字典
+	'''
+	Success = True
+	Result = {}
+	AcceptRules = []
+	AuditRules = []
+	RejectRules = []
+	if Success:
+		try:
+			TheActivity = Activity.objects.get(ID = TheActivityID)
+			#print(len(TheActivity.AdvancedRule.all()))
+			for item in TheActivity.AdvancedRule.all():
+				#print(1)
+				TheInfo = {}
+				if item.MinStartYear != Constants.UNDEFINED_NUMBER:
+					TheInfo["minEnrollmentYear"] = item.MinStartYear
+				if item.MaxStartYear != Constants.UNDEFINED_NUMBER:
+					TheInfo["maxEnrollmentYear"] = item.MaxStartYear
+				if item.Department != "UNDEFINED":
+					TheInfo["department"] = item.Department
+				if item.EducationType != "UNDEFINED":
+					TheInfo["enrollmentType"] = item.EducationType
+				if item.Type == Constants.ADVANCED_RULE_ACCEPT:
+					AcceptRules.append(TheInfo)
+				elif item.Type == Constants.ADVANCED_RULE_AUDIT:
+					AuditRules.append(TheInfo)
+				elif item.Type == Constants.ADVANCED_RULE_REJECT:
+					RejectRules.append(TheInfo)
+			if AcceptRules != []:
+				Result["accept"] = AcceptRules
+			if AuditRules != []:
+				Result["needAudit"] = AuditRules
+			if RejectRules != []:
+				Result["reject"] = RejectRules
+		except:
+			Success = False
+	if Success:
+		return Result
+	else:
+		return {}
+
+def ShowOneActivity(TheUserID, TheActivityID):
+	'''
+	描述：给定活动id，查询活动具体信息
+	参数：用户id和活动id
+	返回：一个字典，里面有活动各种信息，错误信息
+	成功：错误信息空
+	失败：返回字典空，错误信息存在
+	'''
+	Success = True
+	Result = {}
+	ErrorInfo = {}
+	Reason = ""
+	Code = 0
+	if Success:
+		try:
+			TheActivity = Activity.objects.get(ID = TheActivityID)
+		except:
+			Success = False
+			Reason = "未找到该活动！"
+			Code = Constants.ERROR_CODE_NOT_FOUND
+
+	if Success:
+		Result = QueryActivity(TheActivityID)
+		if Result == {}:
+			Success = False
+			Reason = "查询活动失败！"
+			Code = Constants.ERROR_CODE_UNKNOWN
+
+	if Success:
+		try:
+			TheJoinActivityList = JoinInformation.objects.filter(ActivityId = TheActivity)
+			Result["participants"] = []
 			NumberNeedAudit = 0
 			for item in TheJoinActivityList:
 				TheUserInfo = {}
@@ -366,11 +448,26 @@ def QueryActivity(TheUserID, TheActivityID):
 				Result["needAuditCount"] = NumberNeedAudit
 		except:
 			Success = False
-	if Success == False:
-		Result = {}
-	return Result
+			Reason = "查询活动失败！"
+			Code = Constants.ERROR_CODE_UNKNOWN
+	if Success:
+		try:	
+			Result["rules"] = {}
+			Result["rules"] = ShowAllAdvancedRules(TheActivityID)
+			Result["rules"]["ruleType"] = TheActivity.GlobalRule
+		except:
+			Success = False
+			Reason = "查询活动失败！"
+			Code = Constants.ERROR_CODE_UNKNOWN
+	if Success:
+		return Result, {}
+	else:
+		ErrorInfo["reason"] = Reason
+		ErrorInfo["code"] = Code
+		return {}, ErrorInfo
 
-def ShowAllActivity():
+
+def ShowAllActivity(TheLastID, TheMostNumber):
 	'''
 	描述：查询所有活动
 	参数: 无
@@ -387,9 +484,14 @@ def ShowAllActivity():
 	Return = {}
 	ErrorInfo = {}
 	Result = []
+	print(TheLastID, TheMostNumber)
 	if Success:
 		try:
+			CurrentNumber = 0
 			for item in Info:
+				if TheLastID != Constants.UNDEFINED_NUMBER:
+					if item.ID <= TheLastID:
+						continue
 				TheResult = {}
 				TheResult["id"] = item.ID
 				TheResult["name"] = item.Name
@@ -409,6 +511,9 @@ def ShowAllActivity():
 				TheResult["tags"] = GlobalFunctions.SplitTags(item.Tags)
 				if JudgeValid.JudgeActivityCanBeSearched(item.ID):
 					Result.append(TheResult)
+					CurrentNumber = CurrentNumber + 1
+					if TheMostNumber != Constants.UNDEFINED_NUMBER and CurrentNumber >= TheMostNumber:
+						break
 		except:
 			Success = False
 	if Success == True:
@@ -469,26 +574,23 @@ def DeleteActivity(TheUserID, TheActivityID):
 		try:
 			TheUser = User.objects.get(OpenID = TheUserID)
 			TheActivity = Activity.objects.get(ID = TheActivityID)
-			TheJoinInformation = JoinInformation.objects.get(UserId = TheUser, ActivityId = TheActivity)
+			if JudgeValid.JudgeWhetherCreator(TheUserID, TheActivityID) != True:
+				Success = False
+				Reason = "没有权限,只有管理员才能删除活动！！"
+				Code = Constants.ERROR_CODE_LACK_ACCESS
 		except:
 			Success = False
 			Code = Constants.ERROR_CODE_NOT_FOUND
-			Reason = "未找到该活动,或者用户未报名该活动！"
+			Reason = "未找到该活动！"
 	if Success:
 		if JudgeValid.JudgeActivityNormal(TheActivityID) != True: 
 			Success = False
 			Reason = "活动状态为异常或结束，不能操作！"
 			Code = Constants.ERROR_CODE_INVALID_CHANGE
-	if Success:
-		try:
-			if TheJoinInformation.Role != Constants.USER_ROLE_CREATOR:
-				Success = False
-				Reason = "没有权限！"
-				Code = Constants.ERROR_CODE_LACK_ACCESS
-		except:
+		if TheActivity.StatusCheck != Constants.ACTIVITY_STATUS_CHECK_BEFORE:
 			Success = False
-			Code = Constants.ERROR_CODE_NOT_FOUND
-			Reason = "用户未报名该活动！"
+			Reason = "签到已经开始，不能删除活动！"
+			Code = Constants.ERROR_CODE_INVALID_CHANGE
 	if Success:
 		TheActivity.StatusGlobal = Constants.ACTIVITY_STATUS_GLOBAL_EXCEPT
 		TheActivity.save()
@@ -827,6 +929,8 @@ def ChangeActivityStatusByTime():
 				TheJoinEndTime = item.SignUpEndTime
 				TheCheckStartTime = item.StartTime
 				TheCheckEndTime = item.EndTime
+				TheCurrentUser = item.CurrentUser
+				TheMinUser = item.MinUser
 				if item.StatusJoin == Constants.ACTIVITY_STATUS_JOIN_BEFORE:
 					if GlobalFunctions.JudgeWhetherSameMinute(TheJoinStartTime):
 						item.StatusJoin = Constants.ACTIVITY_STATUS_JOIN_CONTINUE
@@ -834,7 +938,7 @@ def ChangeActivityStatusByTime():
 					if GlobalFunctions.JudgeWhetherSameMinute(TheJoinEndTime):
 						item.StatusJoin = Constants.ACTIVITY_STATUS_JOIN_STOPPED
 				if item.StatusCheck == Constants.ACTIVITY_STATUS_CHECK_BEFORE:
-					if GlobalFunctions.JudgeWhetherSameMinute(TheCheckStartTime):
+					if GlobalFunctions.JudgeWhetherSameMinute(TheCheckStartTime) and TheCurrentUser >= TheMinUser:
 						item.StatusCheck = Constants.ACTIVITY_STATUS_CHECK_CONTINUE
 				if item.StatusCheck != Constants.ACTIVITY_STATUS_CHECK_STOPPED:
 					if GlobalFunctions.JudgeWhetherSameMinute(TheCheckEndTime):
