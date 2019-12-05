@@ -64,3 +64,5 @@ class Constants:
     #搜索相关
     MAX_SEARCH_RESULT = 10
     MAX_RECOMMEND_WORD = 5
+
+    #

@@ -246,6 +246,7 @@ class WhooshSearcher:
             TheResult["statusGlobal"] = int(TheActivity.StatusGlobal)
             TheResult["statusJoin"] = int(TheActivity.StatusJoin)
             TheResult["statusCheck"] = int(TheActivity.StatusCheck)
+            TheResult["imageUrl"] = GlobalFunctions.GetTrueAvatarUrlActivity(TheActivity.ImageURL)
             TheResult["tags"] = GlobalFunctions.SplitTags(TheActivity.Tags)
             #print(TheResult)
             if JudgeValid.JudgeActivityCanBeSearched(TheID) != True:

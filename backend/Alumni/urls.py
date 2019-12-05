@@ -52,6 +52,8 @@ ChangeUserInformation = {"openId":"2017013569", "activityId":1, "newStatus":5, "
 
 from django.contrib import admin
 from django.conf.urls import url
+from django.views.static import serve
+from Alumni.settings import MEDIA_ROOT
 from Alumni.LogicManager.Constants import Constants
 from Alumni.LogicManager import GlobalFunctions
 from Alumni.LogicManager import JudgeValid
@@ -65,7 +67,7 @@ from Alumni.RequestHandler import UserActivityHandler
 from Alumni.RequestHandler import SearchHandler
 from Alumni.RequestHandler import OtherHandler
 
-TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
+#TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
 
 urlpatterns = [
     #处理用户请求url
@@ -107,4 +109,6 @@ urlpatterns = [
     url(r'^activityTypesList$', OtherHandler.QueryActivityTypes),
     url(r'^educationTypesList$', OtherHandler.QueryEducationTypes),
     url(r'^departmentsList$', OtherHandler.QueryDepartments),
+    url(r'^uploadImage$', OtherHandler.UploadPicture),
+    url(r'^media/(?P<path>.*)', serve, {"document_root":MEDIA_ROOT}),
 ]

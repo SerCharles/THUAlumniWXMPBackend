@@ -30,6 +30,7 @@ from DataBase.models import AdvancedRule
 from DataBase.models import Department
 from DataBase.models import EducationType
 from DataBase.models import ActivityType
+from DataBase.models import Picture
 from Alumni.LogicManager.Constants import Constants
 
 #时间相关函数
@@ -319,4 +320,78 @@ def SplitTags(TheTag):
 	return TheTag.split(',')
 
 
+def SplitFileName(TheFileName):
+	'''
+	描述：切分文件名
+	参数：文件名
+	返回：没有扩展名的文件名+扩展名
+	'''
+	TheExtention = '.' + TheFileName.split('.')[-1]
+	TheMainFileName = TheFileName[ : 0 - len(TheExtention)]
+	return TheMainFileName, TheExtention
+
+def GetTrueAvatarUrlUser(TheURL):
+	'''
+	描述：获取用户头像，如果有就正常返回，否则返回默认
+	参数：数据库里存储的用户头像
+	返回：成功：url，失败：none
+	'''
+	if TheURL != "UNDEFINED":
+		return TheURL
+	try:
+		TheAvatar = Picture.objects.get(ID = 0)
+		TheCreateTime = TheAvatar.CreateTime
+		TheFileName = TheAvatar.Image.name
+		TheURL = '/media/' + TheFileName
+		return TheURL
+	except:
+		return None
+
+def GetTrueAvatarUrlActivity(TheURL):
+	'''
+	描述：获取活动头像，如果有就正常返回，否则返回默认
+	参数：数据库里存储的活动头像
+	返回：成功：url，失败：none
+	'''
+	if TheURL != "UNDEFINED":
+		return TheURL
+	try:
+		TheAvatar = Picture.objects.get(ID = 1)
+		TheCreateTime = TheAvatar.CreateTime
+		TheFileName = TheAvatar.Image.name
+		TheURL = '/media/' + TheFileName
+		return TheURL
+	except:
+		return None
+
+def UploadPicture(TheData):
+	'''
+	描述：上传图片
+	参数：数据
+	返回：result-success还是fail，fail需要原因和错误码，success需要url
+	'''
+	FileEXT = TheData.name.split('.').pop()
+	Result = {}
+	Success = True
+	Reason = ""
+	Code = 0
+	TheURL = ""
+	try:
+		TheCreateTime = GetCurrentTime()
+		NewPicture = Picture.objects.create(Image = TheData, CreateTime = TheCreateTime)
+		NewPicture.save()
+		TheMainFileName, TheExtention = SplitFileName(TheData.name)
+		TheURL = '/media/' + TheMainFileName + '_' + str(TheCreateTime) + TheExtention
+	except:
+		Success = False
+		Code = Constants.ERROR_CODE_UNKNOWN
+		Reason = "上传图片失败！"
+	if Success:
+		Result["result"] = "success"
+		Result["url"] = TheURL
+	else:
+		Result["result"] = "fail"
+		Result["reason"] = Reason
+		Result["code"] = Code
+	return Result
 

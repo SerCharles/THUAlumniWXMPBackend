@@ -222,3 +222,75 @@ def QueryDepartments(request):
     else:
         Response.status_code = 400
     return Response  
+
+def UploadPicture(request):
+    '''
+    描述：处理上传图片
+    参数：request
+    成功返回url
+    失败则是
+    {
+    "errid":xxx,
+    "errmsg":"xxxx"
+    }
+    '''
+    Success = True
+    Return = {}
+    Info = {}
+    Reason = ""
+    ErrorID = Constants.UNDEFINED_NUMBER
+    TheSession = ""
+    TheUserID = ""
+    TheData = None
+    TheURL = ""
+    #获取请求数据
+    if Success:
+        try:
+            TheSession = request.GET.get("session")
+            TheData = request.FILES.get("file")
+        except:
+            Success = False
+            Reason = "请求参数不合法！"
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
+    
+    #判断是否登录，获取待查询的openid
+    if Success:
+        try:
+            TheUserID = UserManager.GetCurrentUser(TheSession)
+            if TheUserID == None:
+                Success = False
+                Reason = "用户未登录！"
+                ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+        except:
+            Success = False
+            Reason = "用户未登录！"
+            ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+
+    #调用数据库函数
+    if Success:
+        try:
+            Info = GlobalFunctions.UploadPicture(TheData)
+            #print(Info)
+            if Info["result"] == "success":
+                TheURL = Info["url"]
+            else:
+                Success = False
+                Reason = Info["reason"]
+                ErrorID = Info["code"]
+        except:
+            Success = False
+            Reason = "上传图片失败！"
+            ErrorID = Constants.ERROR_CODE_NOT_FOUND
+
+    if Success:
+        Return["result"] = "success"
+        Return["url"] = TheURL
+    else:
+        Return["errid"] = ErrorID
+        Return["errmsg"] = Reason
+    Response = JsonResponse(Return)
+    if Success == True:
+        Response.status_code = 200
+    else:
+        Response.status_code = 400
+    return Response  
