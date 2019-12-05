@@ -83,6 +83,10 @@ def AddActivity(ID, Information):
 			else:
 				TheMaxUser = Constants.UNDEFINED_NUMBER
 			JudgeResult = JudgeValid.JudgeParameterValid(CurTime, StartTime, EndTime, StartSignTime, StopSignTime, 1, TheMinUser, TheMaxUser)
+			if "imageUrl" in Information:
+				TheImageURL = Information["imageUrl"]
+			else:
+				TheImageURL = "UNDEFINED"		
 			if JudgeResult["result"] != "success":
 				Success = False
 				Reason = JudgeResult["reason"]
@@ -122,7 +126,7 @@ def AddActivity(ID, Information):
 			Code = Constants.ERROR_CODE_INVALID_PARAMETER
 
 
-	#获得标签和正文
+	#获得标签,正文,头像
 	if Success:
 		try:
 			TheTagsList = Information["tags"]
@@ -179,7 +183,7 @@ def AddActivity(ID, Information):
 			NewActivity = Activity.objects.create(Name = TheName, Place = ThePlace, CreateTime = TheCreateTime, StartTime = StartTime, EndTime = EndTime, SignUpStartTime = StartSignTime,\
 			SignUpEndTime = StopSignTime, MinUser = TheMinUser, MaxUser = TheMaxUser, CurrentUser = 0, Type = TheType, \
 			StatusGlobal = TheStatusGlobal, StatusJoin = TheStatusJoin, StatusCheck = TheStatusCheck, CanBeSearched = TheSearched, \
-			GlobalRule = TheGlobalRule, Tags = TheTags, Description = TheDescription)
+			GlobalRule = TheGlobalRule, Tags = TheTags, Description = TheDescription, ImageURL = TheImageURL)
 			NewActivity.save()
 			ActivityID = NewActivity.ID
 
@@ -344,6 +348,7 @@ def QueryActivity(TheActivityID):
 			Result["statusJoin"] = int(Info.StatusJoin)
 			Result["statusCheck"] = int(Info.StatusCheck)
 			Result["tags"] = GlobalFunctions.SplitTags(Info.Tags)
+			Result["imageUrl"] = GlobalFunctions.GetTrueAvatarUrlActivity(Info.ImageURL)
 		except:
 			Success = False
 	if Success == False:
@@ -466,7 +471,6 @@ def ShowOneActivity(TheUserID, TheActivityID):
 		ErrorInfo["code"] = Code
 		return {}, ErrorInfo
 
-
 def ShowAllActivity(TheLastID, TheMostNumber):
 	'''
 	描述：查询所有活动
@@ -484,13 +488,16 @@ def ShowAllActivity(TheLastID, TheMostNumber):
 	Return = {}
 	ErrorInfo = {}
 	Result = []
-	print(TheLastID, TheMostNumber)
+	#print(TheLastID, TheMostNumber)
 	if Success:
 		try:
 			CurrentNumber = 0
-			for item in Info:
+			i = len(Info) - 1
+			while i >= 0:
+				item = Info[i]
 				if TheLastID != Constants.UNDEFINED_NUMBER:
-					if item.ID <= TheLastID:
+					if item.ID >= TheLastID:
+						i -= 1
 						continue
 				TheResult = {}
 				TheResult["id"] = item.ID
@@ -509,11 +516,14 @@ def ShowAllActivity(TheLastID, TheMostNumber):
 				TheResult["statusJoin"] = int(item.StatusJoin)
 				TheResult["statusCheck"] = int(item.StatusCheck)
 				TheResult["tags"] = GlobalFunctions.SplitTags(item.Tags)
+				TheResult["imageUrl"] = GlobalFunctions.GetTrueAvatarUrlActivity(item.ImageURL)
+
 				if JudgeValid.JudgeActivityCanBeSearched(item.ID):
 					Result.append(TheResult)
 					CurrentNumber = CurrentNumber + 1
 					if TheMostNumber != Constants.UNDEFINED_NUMBER and CurrentNumber >= TheMostNumber:
 						break
+				i -= 1
 		except:
 			Success = False
 	if Success == True:
@@ -690,6 +700,11 @@ def ChangeActivity(TheUserID, Information):
 				ChangeDictionary["canBeSearched"] = bool(Information["canBeSearched"])
 			else:
 				ChangeDictionary["canBeSearched"] = TheActivity.CanBeSearched
+			if "imageUrl" in Information:
+				ChangeDictionary["imageUrl"] = Information["imageUrl"]
+			else:
+				ChangeDictionary["imageUrl"] = TheActivity.ImageURL
+
 			if "tags" in Information:
 				if JudgeValid.JudgeTagListValid(Information["tags"]) != True:
 					Success = False
@@ -785,6 +800,7 @@ def ChangeActivity(TheUserID, Information):
 			TheActivity.CanBeSearched = ChangeDictionary["canBeSearched"]
 			TheActivity.GlobalRule = ChangeDictionary["ruleType"]
 			TheActivity.Tags = ChangeDictionary["tags"]
+			TheActivity.ImageURL = ChangeDictionary["imageUrl"]
 			TheActivity.save()
 
 			TheSearcher = SearchAndRecommend.WhooshSearcher.Create()

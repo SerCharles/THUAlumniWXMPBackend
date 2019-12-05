@@ -58,6 +58,7 @@ class Activity(models.Model):
     CanBeSearched = models.BooleanField()
     GlobalRule = models.IntegerField(choices = RULE_TYPE_ACTIVITY)
     Tags = models.CharField(max_length = 300)
+    ImageURL = models.CharField(max_length = 300)
     Description = models.TextField()
 
 class AdvancedRule(models.Model):
@@ -111,3 +112,15 @@ class EducationType(models.Model):
 class ActivityType(models.Model):
     ID = models.AutoField(primary_key = True)
     Name = models.CharField(max_length = 300)
+
+def GeneratePictureURL(TheInstance, TheFileName):
+    TheExtention = TheFileName.split('.').pop()
+    TheMainFileName = TheFileName[ : 0 - len(TheExtention) - 1]
+    TheFileName = TheMainFileName + '_' + str(TheInstance.CreateTime) + '.' + TheExtention
+    return TheFileName
+
+class Picture(models.Model):
+    ID = models.AutoField(primary_key = True)
+    CreateTime = models.IntegerField()
+    Image = models.ImageField(upload_to = GeneratePictureURL)
+

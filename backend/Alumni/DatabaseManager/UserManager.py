@@ -288,6 +288,7 @@ def QueryUser(ID):
 	if Success:
 		try:
 			Result["name"] = Object.Name
+			Result["avatarUrl"]	= GlobalFunctions.GetTrueAvatarUrlUser(Object.AvatarURL)
 		except:
 			Success = False
 	
