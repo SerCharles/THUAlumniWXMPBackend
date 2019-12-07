@@ -57,7 +57,7 @@ def JoinActivity(request):
         except:
             Success = False
             Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
     #获取请求理由
     if Success:
         try:
@@ -134,7 +134,7 @@ def QuitActivity(request):
         except:
             Success = False
             Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
 
     #判断是否登录， 获取待查询的openid
     if Success:
@@ -201,7 +201,7 @@ def QuerySelfActivity(request):
         except:
             Success = False
             Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
     
     #判断是否登录，获取待查询的openid
     if Success:
@@ -270,7 +270,7 @@ def QueryAllParticipants(request):
         except:
             Success = False
             Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
     
     #判断是否登录，获取待查询的openid
     if Success:
@@ -339,7 +339,7 @@ def QueryAllParticipantsAdmin(request):
         except:
             Success = False
             Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
     
     #判断是否登录，获取待查询的openid
     if Success:
@@ -408,7 +408,7 @@ def QueryAllAuditParticipants(request):
         except:
             Success = False
             Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
     
     #判断是否登录，获取待查询的openid
     if Success:
@@ -481,7 +481,7 @@ def ChangeUserRole(request):
         except:
             Success = False
             Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
 
     #判断是否登录， 获取待查询的openid
     if Success:
@@ -547,7 +547,7 @@ def AuditUser(request):
         except:
             Success = False
             Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
 
     #判断是否登录， 获取待查询的openid
     if Success:
@@ -612,7 +612,7 @@ def RemoveFromActivity(request):
         except:
             Success = False
             Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
 
     #判断是否登录， 获取待查询的openid
     if Success:
@@ -679,10 +679,11 @@ def CheckInActivity(request):
         try:
             TheSession = request.GET.get("session")
             TheActivity = int(request.GET.get("activityId"))
+            TheCode = request.GET.get("code")
         except:
             Success = False
             Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
 
     #判断是否登录， 获取待查询的openid
     if Success:
@@ -700,7 +701,7 @@ def CheckInActivity(request):
     #调用数据库函数添加活动
     if Success:
         try:
-            Info = UserActivityManager.CheckInActivity(TheUserID, TheActivity)
+            Info = UserActivityManager.CheckInActivity(TheUserID, TheActivity, TheCode)
             #print(Info)
             if Info["result"] != "success":
                 Success = False
@@ -709,6 +710,89 @@ def CheckInActivity(request):
         except:
             Success = False
             Reason = "签到失败"
+            ErrorID = Constants.ERROR_CODE_UNKNOWN
+
+    if Success:
+        Return["result"] = "success"
+    else:
+        Return["errid"] = ErrorID
+        Return["errmsg"] = Reason
+    Response = JsonResponse(Return)
+    if Success == True:
+        Response.status_code = 200
+    else:
+        Response.status_code = 400
+    return Response
+
+def ReportActivity(request):
+    '''
+    描述：处理举报活动请求
+    参数：request
+    成功只返回
+    {
+    "result": "success"
+    }   
+    失败则是
+    {
+    "errid":xxx,
+    "errmsg":"xxxx"
+    }
+    '''
+    Success = True
+    Return = {}
+    Reason = ""
+    ErrorID = Constants.UNDEFINED_NUMBER
+    TheSession = ""
+    TheActivity = Constants.UNDEFINED_NUMBER
+    TheUserID = ""
+    TheReason = None
+    #获取请求数据
+    if Success:
+        try:
+            TheSession = request.GET.get("session")
+            TheActivity = int(request.GET.get("activityId"))
+        except:
+            Success = False
+            Reason = "请求参数不合法！"
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
+    #获取请求理由
+    if Success:
+        try:
+            TheReason = json.loads(request.body)["reason"]
+            if TheReason == "":
+                Success = False
+                Reason = "举报理由不能为空！"
+                ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
+        except:
+            Success = False
+            Reason = "举报理由不能为空！"
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
+
+    #判断是否登录， 获取待查询的openid
+    if Success:
+        try:
+            TheUserID = UserManager.GetCurrentUser(TheSession)
+            if TheUserID == None:
+                Success = False
+                Reason = "用户未登录！"
+                ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+        except:
+            Success = False
+            Reason = "用户未登录！"
+            ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+
+    #调用数据库函数添加活动
+    if Success:
+        try:
+            Info = UserActivityManager.ReportActivity(TheUserID, TheActivity, TheReason)
+            #print(Info)
+            if Info["result"] != "success":
+                Success = False
+                Reason = Info["reason"]
+                ErrorID = Info["code"]
+        except:
+            Success = False
+            Reason = "举报活动失败"
             ErrorID = Constants.ERROR_CODE_UNKNOWN
 
     if Success:

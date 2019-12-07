@@ -474,7 +474,8 @@ def RemoveRefuseActivity(TheUserID, TheActivityList):
 			for item in TheActivityList["activityList"]:
 				TheActivityID = int(item["id"])
 				WhetherCanJoin = JudgeValid.JudgeWhetherCanJoinAdvanced(TheUserID, TheActivityID)
-				if WhetherCanJoin != Constants.UNDEFINED_NUMBER:
+				WhetherFull = JudgeValid.JudgeWhetherFull(TheActivityID)
+				if WhetherCanJoin != Constants.UNDEFINED_NUMBER and WhetherFull == False:
 					NewActivityList.append(item)
 		except:
 			Success = False

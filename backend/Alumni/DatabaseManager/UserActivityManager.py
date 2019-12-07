@@ -30,6 +30,7 @@ from DataBase.models import AdvancedRule
 from DataBase.models import Department
 from DataBase.models import EducationType
 from DataBase.models import ActivityType
+from DataBase.models import ReportInformation
 from Alumni.LogicManager.Constants import Constants
 from Alumni.LogicManager import GlobalFunctions
 from Alumni.LogicManager import JudgeValid
@@ -98,13 +99,16 @@ def ShowSelfActivity(TheUserID):
 		try:
 			TheUser = User.objects.get(OpenID = TheUserID)
 			TheJoinActivityList = JoinInformation.objects.filter(UserId = TheUser)
+			TheJoinActivityList = TheJoinActivityList.reverse()
 		except:
 			Success = False
 			Reason = "未找到用户!"
 			Code = Constants.ERROR_CODE_NOT_FOUND
 	if Success:
 		try:
-			for item in TheJoinActivityList:
+			i = len(TheJoinActivityList) - 1
+			while i >= 0:
+				item = TheJoinActivityList[i]
 				TheResult = {}
 				TheResult = ActivityManager.QueryActivity(item.ActivityId.ID)
 				if TheResult == {}:
@@ -118,6 +122,7 @@ def ShowSelfActivity(TheUserID):
 				if item.CheckTime != Constants.UNDEFINED_NUMBER:
 					TheResult["checkTime"] = GlobalFunctions.TimeStampToTimeString(item.CheckTime)
 				ResultList.append(TheResult)
+				i -= 1
 		except:
 			Success = False
 			Reason = "查询历史记录失败！"
@@ -160,7 +165,7 @@ def ShowAllMembers(TheActivityID):
 				TheResult["selfStatus"] = item.Status
 				TheResult["selfRole"] = item.Role
 				TheResult["name"] = item.UserId.Name
-				TheResult["avatarUrl"] = item.UserId.AvatarURL
+				TheResult["avatarUrl"] = GlobalFunctions.GetTrueAvatarUrlUser(item.UserId.AvatarURL)
 				if JudgeValid.JudgeUserStatusJoined(item.Status):
 					ResultList.append(TheResult)
 		except:
@@ -208,7 +213,7 @@ def ShowAllMembersAdmin(TheUserID, TheActivityID):
 				TheResult = {}
 				TheResult["openId"] = item.UserId.OpenID
 				TheResult["name"] = item.UserId.Name
-				TheResult["avatarUrl"] = item.UserId.AvatarURL
+				TheResult["avatarUrl"] = GlobalFunctions.GetTrueAvatarUrlUser(item.UserId.AvatarURL)
 				TheResult["selfStatus"] = item.Status
 				TheResult["selfRole"] = item.Role
 				TheResult["submitTime"] = GlobalFunctions.TimeStampToTimeString(item.SubmitTime)
@@ -279,7 +284,7 @@ def ShowAllAuditMembers(TheUserID, TheActivityID):
 				if item.Status == Constants.USER_STATUS_WAITVALIDATE:
 					TheResult["openId"] = item.UserId.OpenID
 					TheResult["name"] = item.UserId.Name
-					TheResult["avatarUrl"] = item.UserId.AvatarURL
+					TheResult["avatarUrl"] = GlobalFunctions.GetTrueAvatarUrlUser(item.UserId.AvatarURL)
 					TheResult["submitTime"] = GlobalFunctions.TimeStampToTimeString(item.SubmitTime)
 					TheResult["submitMsg"] = item.JoinReason
 					ResultList.append(TheResult)
@@ -422,6 +427,58 @@ def JoinActivity(TheUserID, TheActivityID, TheJoinReason):
 			Return["reason"] = Reason
 			Return["code"] = Code
 	#print(Return)
+	return Return
+
+def ReportActivity(TheUserID, TheActivityID, TheReportReason):
+	'''
+	描述：举报函数	
+	参数：用户id，活动id, 举报原因
+	返回：成功{result: success}，失败{result：fail，reason：xxx, code:xxx}
+	'''
+	Success = True
+	Reason = ""
+	Return = {}
+	Code = Constants.UNDEFINED_NUMBER
+	TheStatus = -1
+	TheRole = -1
+	if Success:
+		try:
+			TheUser = User.objects.get(OpenID = TheUserID)
+			TheActivity = Activity.objects.get(ID = TheActivityID)
+		except:
+			Success = False
+			Reason = "未找到用户或活动"
+			Code = Constants.ERROR_CODE_NOT_FOUND
+	#print(Success)	
+	TheRole = Constants.USER_ROLE_COMMONER
+	if Success:
+		if JudgeValid.JudgeActivityNormal(TheActivityID) != True: 
+			Success = False
+			Reason = "活动状态为异常或结束，不能操作！"
+			Code = Constants.ERROR_CODE_INVALID_CHANGE
+
+	if Success:
+		try:
+			TheSubmitTime = GlobalFunctions.GetCurrentTime()
+			try:
+				TheReportInformation = ReportInformation.objects.get(UserId = TheUser, ActivityId = TheActivity)
+				TheReportInformation.delete()
+			except:
+				donothing = 0
+			TheReportInformation = ReportInformation.objects.create(UserId = TheUser, ActivityId = TheActivity, \
+			SubmitTime = TheSubmitTime, Reason = TheReportReason)
+			TheReportInformation.save()
+		except:
+			Success = False
+			Reason = "添加举报记录失败"
+			Code = Constants.ERROR_CODE_UNKNOWN
+	#print(Return)
+	if Success:
+		Return["result"] = "success"
+	else:
+		Return["result"] = "fail"
+		Return["reason"] = Reason
+		Return["code"] = Code
 	return Return
 
 def QuitActivity(TheUserID, TheActivityID):
@@ -707,10 +764,10 @@ def RemoveUser(TheManagerID, TheUserID, TheActivityID):
 		Return["code"] = Code
 	return Return
 
-def CheckInActivity(TheUserID, TheActivityID):
+def CheckInActivity(TheUserID, TheActivityID, TheCode):
 	'''
 	描述：用户签到
-	参数：用户openid，活动id
+	参数：用户openid，活动id,二维码code
 	返回：成功{result：success}
 		 失败：{result：fail，reason：xxx，code：xxx}
 	'''
@@ -724,6 +781,10 @@ def CheckInActivity(TheUserID, TheActivityID):
 		try:
 			TheActivity = Activity.objects.get(ID = TheActivityID)
 			TheUser = User.objects.get(OpenID = TheUserID)
+			if TheCode != TheActivity.Code:
+				Success = False
+				Reason = "二维码和活动不匹配！"
+				Code = Constants.ERROR_CODE_INVALID_CHANGE
 		except:
 			Success = False
 			Reason = "未找到用户或活动！"
