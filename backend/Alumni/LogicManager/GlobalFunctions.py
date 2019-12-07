@@ -20,6 +20,7 @@ import urllib.request
 import base64
 import json
 import traceback
+import qrcode 
 from django.db import models
 from DataBase.models import User
 from DataBase.models import Education
@@ -31,6 +32,8 @@ from DataBase.models import Department
 from DataBase.models import EducationType
 from DataBase.models import ActivityType
 from DataBase.models import Picture
+from DataBase.models import Admin
+from DataBase.models import ReportInformation
 from Alumni.LogicManager.Constants import Constants
 
 #时间相关函数
@@ -110,6 +113,23 @@ def GenerateSessionID():
 		#print(TheSession)
 		try:
 			TheUser = User.objects.get(Session = TheSession)
+			TheManager = Admin.objects.get(Session = TheSession)
+		except:
+			break
+	return TheSession
+
+def GenerateActivityCode():
+	'''
+	描述：生成随机活动code
+	参数：无
+	返回：code
+	'''
+	while True:
+		length = random.randint(10,50)
+		TheSession =  ''.join(random.sample(string.ascii_letters + string.digits, length))
+		#print(TheSession)
+		try:
+			TheUser = Activity.objects.get(Code = TheSession)
 		except:
 			break
 	return TheSession
@@ -395,3 +415,31 @@ def UploadPicture(TheData):
 		Result["code"] = Code
 	return Result
 
+#二维码相关函数
+def GetQRCodeDir(TheActivityID):
+	'''
+	描述：获取二维码文件的文件名
+	参数：活动id
+	返回：文件名
+	'''
+	TheDirectory = 'media/QRCode'
+	if not os.path.exists(TheDirectory):
+		os.makedirs(TheDirectory)
+	TheFileName = TheDirectory + '/' + str(TheActivityID) + '.png'
+	if os.path.exists(TheFileName):
+		os.remove(TheFileName)
+	return TheFileName
+
+def GenerateQRCode(TheActivityID, TheCode):
+	'''
+	描述：生成活动对应的二维码
+	参数：活动id,活动code
+	返回：二维码文件名
+	'''
+	TheImage = qrcode.make(TheCode)
+	TheFileName = GetQRCodeDir(TheActivityID)
+	TheImage.save(TheFileName)
+	return TheFileName
+
+
+	

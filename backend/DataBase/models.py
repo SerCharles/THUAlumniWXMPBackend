@@ -16,6 +16,12 @@ class User(models.Model):
     AvatarURL = models.CharField(max_length = 300)
     Valid = models.BooleanField()
 
+class Admin(models.Model):
+    ID = models.AutoField(primary_key = True)
+    Username = models.CharField(max_length = 30, unique = True)
+    Password = models.CharField(max_length = 30)
+    Session = models.CharField(max_length = 100, default = "UNDEFINED")
+
 class Education(models.Model):
     ID = models.AutoField(primary_key = True)
     Student = models.ForeignKey(User, on_delete = models.CASCADE, related_name = "Education")
@@ -60,6 +66,7 @@ class Activity(models.Model):
     Tags = models.CharField(max_length = 300)
     ImageURL = models.CharField(max_length = 300)
     Description = models.TextField()
+    Code = models.CharField(max_length = 100, default = "UNDEFINED")
 
 class AdvancedRule(models.Model):
     RULE_TYPE = (
@@ -99,7 +106,13 @@ class JoinInformation(models.Model):
     UserId = models.ForeignKey(User, on_delete = models.CASCADE, related_name = "History")
     ActivityId = models.ForeignKey(Activity, on_delete = models.CASCADE, related_name = "History")
     JoinReason = models.CharField(max_length = 310)
-    #todo:付款等
+
+class ReportInformation(models.Model):
+    ID = models.AutoField(primary_key = True)
+    SubmitTime = models.IntegerField()
+    UserId = models.ForeignKey(User, on_delete = models.CASCADE, related_name = "ReportList")
+    ActivityId = models.ForeignKey(Activity, on_delete = models.CASCADE, related_name = "ReportList")
+    Reason = models.CharField(max_length = 310)
 
 class Department(models.Model):
     ID = models.AutoField(primary_key = True)

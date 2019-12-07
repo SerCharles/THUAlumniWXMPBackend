@@ -138,7 +138,7 @@ def GetActivityList(request):
         except:
             Success = False
             Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
     
     #判断是否登录，获取待查询的openid
     if Success:
@@ -361,7 +361,7 @@ def DeleteActivity(request):
         except:
             Success = False
             Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
     
     #判断是否登录，获取待查询的openid
     if Success:
@@ -430,7 +430,7 @@ def ChangeActivity(request):
         except:
             Success = False
             Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
 
     #判断是否登录， 获取待查询的openid
     if Success:
@@ -500,7 +500,7 @@ def ChangeActivityDetail(request):
         except:
             Success = False
             Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
 
     #判断是否登录， 获取待查询的openid
     if Success:
@@ -539,6 +539,80 @@ def ChangeActivityDetail(request):
     else:
         Response.status_code = 400
     return Response
+
+def UploadActivityQRCode(request):
+    '''
+    描述：处理更新活动二维码请求
+    参数：request
+    成功返回
+    {
+    图片
+    }
+    失败则是
+    {
+    "errid":xxx,
+    "errmsg":"xxxx"
+    }
+    '''
+    Success = True
+    Return = {}
+    Info = {}
+    Reason = ""
+    TheImageName = ""
+    TheImage = None
+    ErrorID = Constants.UNDEFINED_NUMBER
+    TheSession = ""
+    TheActivity = Constants.UNDEFINED_NUMBER
+    TheUserID = ""
+    #获取请求数据
+    if Success:
+        try:
+            TheSession = request.GET.get("session")
+            TheActivity = int(request.GET.get("activityId"))
+        except:
+            Success = False
+            Reason = "请求参数不合法！"
+            ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER
+    
+    #判断是否登录，获取待查询的openid
+    if Success:
+        try:
+            TheUserID = UserManager.GetCurrentUser(TheSession)
+            if TheUserID == None:
+                Success = False
+                Reason = "用户未登录！"
+                ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+        except:
+            Success = False
+            Reason = "用户未登录！"
+            ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+
+    #调用数据库函数
+    if Success:
+        try:
+            Info, TheImageName = ActivityManager.UploadActivityQRCode(TheUserID, TheActivity)
+            #print(Info)
+            if Info["result"] != "success":
+                Success = False
+                Reason = Info["reason"]
+                ErrorID = Info["code"]
+        except:
+            Success = False
+            Reason = "更新活动二维码失败！"
+            ErrorID = Constants.ERROR_CODE_NOT_FOUND
+
+    if Success:
+        TheImage = open(TheImageName,"rb").read()
+        Response = HttpResponse(TheImage, content_type="image/png")
+    else:
+        Return["errid"] = ErrorID
+        Return["errmsg"] = Reason
+        Response = JsonResponse(Return)
+    if Success == True:
+        Response.status_code = 200
+    else:
+        Response.status_code = 400
+    return Response 
 
 def ChangeActivityByTime(request):
     '''

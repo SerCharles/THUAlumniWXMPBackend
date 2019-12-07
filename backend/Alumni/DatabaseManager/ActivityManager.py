@@ -923,6 +923,232 @@ def ChangeAdvancedRules(TheActivityID, NewRules):
 			Success = False
 	return Success
 
+def AdvancedSearch(TheUserID, Information):
+	'''
+	描述：高级检索
+	参数：用户openid，检索信息
+	返回：Result, errorinfo
+	'''
+	Success = True
+	Return = {}
+	ErrorInfo = {}
+	Reason = ""
+	Code = Constants.UNDEFINED_NUMBER
+	SearchDictionary = {}
+	if Success:
+		try:
+			TheUser = User.objects.get(OpenID = TheUserID)
+		except:
+			Success = False
+			Reason = "用户不存在！"
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+	#读取修改数据
+	if Success:
+		try:
+			if "place" in Information:
+				SearchDictionary["place"] = Information["place"]
+			else:
+				SearchDictionary["place"] = ""
+			if "startMin" in Information:
+				SearchDictionary["startMin"] = int(GlobalFunctions.TimeStringToTimeStamp(Information["startMin"]))
+			else:
+				SearchDictionary["startMin"] = 0
+			if "startMax" in Information:
+				SearchDictionary["startMax"] = int(GlobalFunctions.TimeStringToTimeStamp(Information["startMax"]))
+			else:
+				SearchDictionary["startMax"] = Constants.MAX_NUMBER
+			if "endMin" in Information:
+				SearchDictionary["endMin"] = int(GlobalFunctions.TimeStringToTimeStamp(Information["endMin"]))
+			else:
+				SearchDictionary["endMin"] = 0
+			if "endMax" in Information:
+				SearchDictionary["endMax"] = int(GlobalFunctions.TimeStringToTimeStamp(Information["endMax"]))
+			else:
+				SearchDictionary["endMax"] = Constants.MAX_NUMBER
+			if "signupBeginAtMin" in Information:
+				SearchDictionary["signupBeginAtMin"] = int(GlobalFunctions.TimeStringToTimeStamp(Information["signupBeginAtMin"]))
+			else:
+				SearchDictionary["signupBeginAtMin"] = 0
+			if "signupBeginAtMax" in Information:
+				SearchDictionary["signupBeginAtMax"] = int(GlobalFunctions.TimeStringToTimeStamp(Information["signupBeginAtMax"]))
+			else:
+				SearchDictionary["signupBeginAtMax"] = Constants.MAX_NUMBER
+			if "signupStopAtMin" in Information:
+				SearchDictionary["signupStopAtMin"] = int(GlobalFunctions.TimeStringToTimeStamp(Information["signupStopAtMin"]))
+			else:
+				SearchDictionary["signupStopAtMin"] = 0
+			if "signupStopAtMax" in Information:
+				SearchDictionary["signupStopAtMax"] = int(GlobalFunctions.TimeStringToTimeStamp(Information["signupStopAtMax"]))
+			else:
+				SearchDictionary["signupStopAtMax"] = Constants.MAX_NUMBER		
+			if "type" in Information:
+				SearchDictionary["type"] = Information["type"]
+			else:
+				SearchDictionary["type"] = ""	
+			if "statusGlobal" in Information:
+				SearchDictionary["statusGlobal"] = Information["statusGlobal"]
+			else:
+				SearchDictionary["statusGlobal"] = Constants.UNDEFINED_NUMBER	
+			if "statusJoin" in Information:
+				SearchDictionary["statusJoin"] = Information["statusJoin"]
+			else:
+				SearchDictionary["statusJoin"] = Constants.UNDEFINED_NUMBER		
+			if "statusCheck" in Information:
+				SearchDictionary["statusCheck"] = Information["statusCheck"]
+			else:
+				SearchDictionary["statusCheck"] = Constants.UNDEFINED_NUMBER				
+			if "selfStatus" in Information:
+				SearchDictionary["selfStatus"] = Information["selfStatus"]
+			else:
+				SearchDictionary["selfStatus"] = Constants.UNDEFINED_NUMBER - 1
+			if "ruleForMe" in Information:
+				SearchDictionary["ruleForMe"] = Information["ruleForMe"]
+			else:
+				SearchDictionary["ruleForMe"] = Constants.UNDEFINED_NUMBER - 1
+		except:
+			Success = False
+			Reason = "高级检索格式不合法"
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+	if Success:
+		try:
+			JudgeResult = {}
+			JudgeResult = JudgeValid.JudgeSearchStatusValid(SearchDictionary["statusGlobal"], SearchDictionary["statusJoin"], \
+			SearchDictionary["statusCheck"], SearchDictionary["selfStatus"], SearchDictionary["ruleForMe"])
+			if JudgeResult["result"] != "success":
+				Success = False
+				Reason = JudgeResult["reason"]
+				Code = JudgeResult["code"]
+			JudgeResult = JudgeValid.JudgeSearchTimeValid(SearchDictionary["startMin"], SearchDictionary["startMax"])
+			if JudgeResult["result"] != "success":
+				Success = False
+				Reason = "最小开始时间必须小于等于最大开始时间！"
+				Code = Constants.ERROR_CODE_INVALID_PARAMETER
+			JudgeResult = JudgeValid.JudgeSearchTimeValid(SearchDictionary["endMin"], SearchDictionary["endMax"])
+			if JudgeResult["result"] != "success":
+				Success = False
+				Reason = "最小结束时间必须小于等于最大结束时间！"
+				Code = Constants.ERROR_CODE_INVALID_PARAMETER
+			JudgeResult = JudgeValid.JudgeSearchTimeValid(SearchDictionary["signupBeginAtMin"], SearchDictionary["signupBeginAtMax"])
+			if JudgeResult["result"] != "success":
+				Success = False
+				Reason = "最小开始报名时间必须小于等于最大开始报名时间！"
+				Code = Constants.ERROR_CODE_INVALID_PARAMETER
+			JudgeResult = JudgeValid.JudgeSearchTimeValid(SearchDictionary["signupStopAtMin"], SearchDictionary["signupStopAtMax"])
+			if JudgeResult["result"] != "success":
+				Success = False
+				Reason = "最小结束报名时间必须小于等于最大结束报名时间！"
+				Code = Constants.ERROR_CODE_INVALID_PARAMETER
+		except:
+			Success = False
+			Reason = "高级检索格式不合法"
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+	SearchResult = []
+	#查询时间，地点，状态，直接数据库函数
+	if Success:
+		try:
+			QuerySet = Activity.objects.all() 
+			Conditions = {'StartTime__gte': SearchDictionary["startMin"], 'StartTime__lte': SearchDictionary["startMax"],\
+			'EndTime__gte': SearchDictionary["endMin"], 'EndTime__lte': SearchDictionary["endMax"],\
+			'SignUpStartTime__gte': SearchDictionary["signupBeginAtMin"], 'SignUpStartTime__lte': SearchDictionary["signupBeginAtMax"],\
+			'SignUpEndTime__gte': SearchDictionary["signupStopAtMin"], 'SignUpEndTime__lte': SearchDictionary["signupStopAtMax"]}
+			if SearchDictionary["statusGlobal"] != Constants.UNDEFINED_NUMBER:
+				Conditions['StatusGlobal'] = SearchDictionary["statusGlobal"]
+			if SearchDictionary["statusJoin"] != Constants.UNDEFINED_NUMBER:
+				Conditions['StatusJoin'] = SearchDictionary["statusJoin"]
+			if SearchDictionary["statusCheck"] != Constants.UNDEFINED_NUMBER:
+				Conditions['StatusCheck'] = SearchDictionary["statusCheck"]
+			if SearchDictionary["place"] != '':
+				Conditions["Place__icontains"] = SearchDictionary["place"]
+			SearchResult = QuerySet.filter(**Conditions)
+		except:
+			Success = False
+			Reason = "高级检索失败"
+			Code = Constants.ERROR_CODE_UNKNOWN
+
+	#查询活动类型，加入后结果等
+	NewSearchResult = []
+	if Success:
+		try:
+			i = len(SearchResult) - 1
+			while i >= 0:
+				item = SearchResult[i]
+				WhetherMatch = True
+				if SearchDictionary["type"] != "":
+					if JudgeValid.JudgeActivityTypeMatch(SearchDictionary["type"], item.Type) != True:
+						WhetherMatch = False
+				if SearchDictionary["selfStatus"] != Constants.UNDEFINED_NUMBER - 1:
+					TheStatus = JudgeValid.GetSelfStatus(TheUserID, item.ID)
+					if TheStatus != SearchDictionary["selfStatus"]:
+						WhetherMatch = False
+				if SearchDictionary["ruleForMe"] != Constants.UNDEFINED_NUMBER - 1:
+					TheRule = JudgeValid.GetSelfJoinStatus(TheUserID, item.ID)
+					if TheRule != SearchDictionary["ruleForMe"]:
+						WhetherMatch = False
+				if JudgeValid.JudgeActivityCanBeSearched(item.ID) != True:
+					WhetherMatch = False
+				if WhetherMatch == True:
+					print(item.ID)
+					TheInfo = QueryActivity(item.ID)
+					TheInfo["id"] = item.ID
+					NewSearchResult.append(TheInfo)
+				i -= 1
+		except:
+			Success = False
+			Reason = "高级检索失败"
+			Code = Constants.ERROR_CODE_UNKNOWN
+	#print(NewSearchResult)
+	if Success == False:
+		ErrorInfo["reason"] = Reason
+		ErrorInfo["code"] = Code
+	else:
+		Return["activityList"] = NewSearchResult
+		ErrorInfo = {}
+	return Return, ErrorInfo
+
+def UploadActivityQRCode(TheUserID, TheActivityID):
+	'''
+	描述：上传活动二维码
+	参数：用户openid，活动id
+	返回：结果，图片文件名（失败是None）
+	'''
+	Success = True
+	Result = {}
+	Reason = ""
+	TheImageName = ""
+	Code = Constants.UNDEFINED_NUMBER
+	print(TheUserID, TheActivityID)
+	if Success:
+		try:
+			TheUser = User.objects.get(OpenID = TheUserID)
+			TheActivity = Activity.objects.get(ID = TheActivityID)
+			if JudgeValid.JudgeWhetherManager(TheUserID, TheActivityID) != True:
+				Success = False
+				Reason = "没有权限,只有管理员才能设置活动二维码！！"
+				Code = Constants.ERROR_CODE_LACK_ACCESS
+		except:
+			Success = False
+			Code = Constants.ERROR_CODE_NOT_FOUND
+			Reason = "未找到该活动！"
+	print(Success)
+	if Success:
+		if JudgeValid.JudgeActivityNormal(TheActivityID) != True: 
+			Success = False
+			Reason = "活动状态为异常或结束，不能操作！"
+			Code = Constants.ERROR_CODE_INVALID_CHANGE
+	if Success:
+		TheNewCode = GlobalFunctions.GenerateActivityCode()
+		TheActivity.Code = TheNewCode
+		TheActivity.save()
+		TheImageName = GlobalFunctions.GenerateQRCode(TheActivityID, TheNewCode)
+	if Success == True:
+		Result["result"] = "success"
+	else:
+		Result["result"] = "fail"
+		Result["reason"] = Reason 
+		Result["code"] = Code
+		TheImageName = None
+	return Result, TheImageName
+
 def ChangeActivityStatusByTime():
 	'''
 	描述：根据时间修改所有活动数据

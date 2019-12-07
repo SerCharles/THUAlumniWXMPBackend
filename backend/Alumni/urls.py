@@ -61,13 +61,17 @@ from Alumni.DatabaseManager import UserManager
 from Alumni.DatabaseManager import ActivityManager
 from Alumni.DatabaseManager import UserActivityManager
 from Alumni.DatabaseManager import SearchAndRecommend
+from Alumni.DatabaseManager import AdminManager
 from Alumni.RequestHandler import UserHandler
 from Alumni.RequestHandler import ActivityHandler
 from Alumni.RequestHandler import UserActivityHandler
 from Alumni.RequestHandler import SearchHandler
 from Alumni.RequestHandler import OtherHandler
+from Alumni.RequestHandler import AdminHandler
 
-#TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
+TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
+AdminManager.AddAdmin("kebab","reich")
+
 
 urlpatterns = [
     #处理用户请求url
@@ -85,6 +89,7 @@ urlpatterns = [
     url(r'^getActivityInfo$', ActivityHandler.QueryActivity),
     url(r'^getActivityDescription$', ActivityHandler.QueryActivityDetail),
     url(r'^deleteActivity$', ActivityHandler.DeleteActivity),
+    url(r'^generateCheckinCode$', ActivityHandler.UploadActivityQRCode),
     url(r'^changeActivityByTime$', ActivityHandler.ChangeActivityByTime),
 
     #处理用户-活动请求url
@@ -98,10 +103,12 @@ urlpatterns = [
     url(r'^needReview$', UserActivityHandler.QueryAllAuditParticipants),
     url(r'^changeUserRole$', UserActivityHandler.ChangeUserRole),
     url(r'^handleAudit$', UserActivityHandler.AuditUser),
+    url(r'^reportActivity$', UserActivityHandler.ReportActivity),
 
 
     #处理搜索-推荐请求url
     url(r'^searchActivity$', SearchHandler.SearchActivity),
+    url(r'^searchActivityAdvanced$', SearchHandler.SearchActivityAdvanced),
     url(r'^recommendByActivity$', SearchHandler.RecommendActivityByActivity),
     url(r'^recommendByUser$', SearchHandler.RecommendActivityByUser),
 
@@ -111,4 +118,8 @@ urlpatterns = [
     url(r'^departmentsList$', OtherHandler.QueryDepartments),
     url(r'^uploadImage$', OtherHandler.UploadPicture),
     url(r'^media/(?P<path>.*)', serve, {"document_root":MEDIA_ROOT}),
+
+    #处理管理员url
+    url(r'^adminLogin$', AdminHandler.Login),
+    url(r'^adminLogout$', AdminHandler.Logout),
 ]

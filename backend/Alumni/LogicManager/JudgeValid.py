@@ -268,6 +268,61 @@ def JudgeUserStatusCanQuit(TheStatus):
 	else:
 		return False
 
+def JudgeSearchStatusValid(TheStatusGlobal, TheStatusJoin, TheStatusCheck, TheSelfStatus, TheRuleForMe):
+	'''
+	描述：判断一个活动搜索状态字段是否合理
+	参数：活动三个状态，用户状态，报名结果
+	返回：{result：success}/失败{result：fail，reason：xxx}
+	合理：
+	活动状态正常或结束
+	用户状态正常或未报名
+	报名规则如果有，用户状态必须是未报名
+	'''
+	Success = True
+	Reason = ""
+	Code = 0
+	Return = {}
+	if Success:
+		if TheStatusGlobal not in [Constants.UNDEFINED_NUMBER, Constants.ACTIVITY_STATUS_GLOBAL_NORMAL, \
+		Constants.ACTIVITY_STATUS_GLOBAL_FINISH]:
+			Success = False
+			Reason = "活动全局状态字段不合理！"
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+		if TheStatusJoin not in [Constants.ACTIVITY_STATUS_JOIN_BEFORE, Constants.ACTIVITY_STATUS_JOIN_CONTINUE, \
+		Constants.ACTIVITY_STATUS_JOIN_PAUSED, Constants.ACTIVITY_STATUS_JOIN_STOPPED, Constants.UNDEFINED_NUMBER]:
+			Success = False
+			Reason = "活动加入状态字段不合理！"
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+		if TheStatusCheck not in [Constants.ACTIVITY_STATUS_CHECK_BEFORE, Constants.ACTIVITY_STATUS_CHECK_CONTINUE, \
+		Constants.ACTIVITY_STATUS_CHECK_PAUSED, Constants.ACTIVITY_STATUS_CHECK_STOPPED, Constants.UNDEFINED_NUMBER]:
+			Success = False
+			Reason = "活动签到状态字段不合理！"
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+		if TheSelfStatus not in [Constants.UNDEFINED_NUMBER - 1, Constants.USER_STATUS_NOT_JOINED, Constants.USER_STATUS_JOINED\
+		, Constants.USER_STATUS_WAITVALIDATE, Constants.USER_STATUS_CHECKED, Constants.USER_STATUS_FINISHED, \
+		Constants.USER_STATUS_FINISHED_WITHOUT_CHECK]:
+			Success = False
+			Reason = "个人状态字段不合理！"
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER	
+		if TheRuleForMe not in [Constants.UNDEFINED_NUMBER - 1, Constants.USER_STATUS_WAITVALIDATE, \
+		Constants.USER_STATUS_NOT_JOINED, Constants.USER_STATUS_JOINED]:
+			Success = False
+			Reason = "报名结果字段不合理"
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+		if TheSelfStatus in [Constants.USER_STATUS_JOINED\
+		, Constants.USER_STATUS_WAITVALIDATE, Constants.USER_STATUS_CHECKED, Constants.USER_STATUS_FINISHED, \
+		Constants.USER_STATUS_FINISHED_WITHOUT_CHECK] and TheRuleForMe != Constants.UNDEFINED_NUMBER - 1:
+			Success = False
+			Reason = "报名结果字段和个人状态字段冲突，有报名结果字段的话，活动必定是用户未报名的"
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+	if Success:
+		Return["result"] = "success"
+	else:
+		Return["result"] = "fail"
+		Return["reason"] = Reason
+		Return["code"] = Code
+	return Return
+
 #普通参数合理性判断
 def JudgeParameterValid(CurTime, StartTime, EndTime, StartSignTime, StopSignTime, CurUser, MinUser, MaxUser):
 	'''
@@ -316,6 +371,29 @@ def JudgeParameterValid(CurTime, StartTime, EndTime, StartSignTime, StopSignTime
 		Return["reason"] = Reason
 	return Return
 
+def JudgeSearchTimeValid(StartTime, EndTime):
+	'''
+	描述：判断一个高级搜索的活动时间是否合理
+	参数：开始,结束时间
+	返回：{result：success}/失败{result：fail，reason：xxx}
+	合理：
+	'''
+	Success = True
+	Reason = ""
+	Return = {}
+	Code = 0
+	if StartTime > EndTime:
+		Success = False
+		Reason = "开始时间应该小于等于结束时间！"	
+		Code = Constants.ERROR_CODE_INVALID_PARAMETER
+	if Success == True:
+		Return["result"] = "success"
+	else:
+		Return["result"] = "fail"
+		Return["reason"] = Reason
+		Return["code"] = Code
+	return Return
+
 def JudgeTagListValid(TheList):
 	'''
 	描述：判断一个标签数组是否合法
@@ -328,6 +406,23 @@ def JudgeTagListValid(TheList):
 			if one == ',':
 				return False
 	return True
+
+def JudgeActivityTypeMatch(FatherType, SonType):
+	'''
+	描述：判断两个活动类型是否匹配
+	参数：父亲类型，子类型
+	返回：合法True，不合法False
+	如果父亲类型==子类型，或者子类型包含父亲类型可以
+	'''
+	if len(FatherType) > len(SonType):
+		return False
+	if FatherType != SonType[0:len(FatherType)]:
+		return False
+	elif len(FatherType) == len(SonType):
+		return True
+	elif SonType[len(FatherType)] == '-':
+		return True
+	return False
 
 #高级报名合理性判断
 def JudgeSingleRuleValid(TheRule):
@@ -631,3 +726,76 @@ def JudgeWhetherCanJoinAdvanced(TheUserID, TheActivityID):
 					return TheStatus		
 	#返回默认值
 	return DefaultReturn
+
+def JudgeWhetherFull(TheActivityID):
+	'''
+	描述：判断一个活动是否已经满了
+	参数：活动ID
+	返回：是True，不是或失败False
+	'''
+	Success = True
+	if Success:
+		try:
+			TheActivity = Activity.objects.get(ID = TheActivityID)
+			if TheActivity.MaxUser == Constants.UNDEFINED_NUMBER or TheActivity.CurrentUser < TheActivity.MaxUser:
+				Success = False
+			else:
+				Success = True
+		except:
+			Success = True
+	return Success
+
+def GetSelfStatus(TheUserID, TheActivityID):
+	'''
+	描述：给定用户openid和活动id，判断用户参加活动状态
+	参数：用户openid，活动id
+	返回：返回status
+	'''
+	Success = True
+	Return = 0
+	if Success:
+		try:
+			Info = []
+			TheUser = User.objects.get(OpenID = TheUserID)
+			TheActivity = Activity.objects.get(ID = TheActivityID)
+		except:
+			Success = False
+			Return = Constants.UNDEFINED_NUMBER - 1
+	if Success:
+		try:
+			Info = JoinInformation.objects.get(UserId = TheUser, ActivityId = TheActivity)
+			Return = Info.Status
+			if Return in [Constants.USER_STATUS_ABNORMAL, Constants.USER_STATUS_REFUSED]:
+				Return = Constants.UNDEFINED_NUMBER
+		except:
+			Return = Constants.UNDEFINED_NUMBER
+	return Return
+
+def GetSelfJoinStatus(TheUserID, TheActivityID):
+	'''
+	描述：给定用户openid和活动id，判断用户如果报名活动的状态
+	参数：用户openid，活动id
+	返回：返回status
+	'''
+	Success = True
+	Return = 0
+	Reason = ""
+	if Success:
+		try:
+			Info = []
+			TheUser = User.objects.get(OpenID = TheUserID)
+			TheActivity = Activity.objects.get(ID = TheActivityID)
+		except:
+			Success = False
+			Return = Constants.UNDEFINED_NUMBER - 1
+	if Success:
+		try:
+			Info = JoinInformation.objects.get(UserId = TheUser, ActivityId = TheActivity)
+			if Info.Status not in [Constants.USER_STATUS_ABNORMAL, Constants.USER_STATUS_REFUSED]:
+				Success = False
+				Return = Constants.UNDEFINED_NUMBER - 1
+			else:
+				Return = JudgeWhetherCanJoinAdvanced(TheUserID, TheActivityID)
+		except:
+			Return = JudgeWhetherCanJoinAdvanced(TheUserID, TheActivityID)
+	return Return
