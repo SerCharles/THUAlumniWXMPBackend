@@ -293,7 +293,7 @@ def ShowAllAuditMembers(TheUserID, TheActivityID):
 			Reason = "查询待审核成员失败！"
 			Code = Constants.ERROR_CODE_UNKNOWN
 	if Success:
-		Result["members"] = ResultList
+		Result["users"] = ResultList
 		ErrorInfo = {}
 	else:
 		Result = {}

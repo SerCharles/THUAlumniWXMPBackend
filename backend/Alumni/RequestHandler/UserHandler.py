@@ -316,6 +316,14 @@ def SetAvatarURL(request):
             Reason = "用户未登录！"
             ErrorId = Constants.ERROR_CODE_LOGIN_ERROR
 
+    #判断是否被封禁
+    if Success:
+        JudgeResult = JudgeValid.JudgeUserValid(SelfOpenID)
+        if JudgeResult != True:
+            Success = False
+            Reason = "用户已被封禁，不能操作！！"
+            ErrorId = Constants.ERROR_CODE_INVALID_CHANGE
+
     #调用数据库函数进行操作
     if Success:
         try:

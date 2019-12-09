@@ -431,6 +431,7 @@ def ShowOneActivity(TheUserID, TheActivityID):
 
 	if Success:
 		try:
+			Result["canBeSearched"] = TheActivity.CanBeSearched
 			TheJoinActivityList = JoinInformation.objects.filter(ActivityId = TheActivity)
 			Result["participants"] = []
 			NumberNeedAudit = 0
@@ -474,7 +475,7 @@ def ShowOneActivity(TheUserID, TheActivityID):
 def ShowAllActivity(TheLastID, TheMostNumber):
 	'''
 	描述：查询所有活动
-	参数: 无
+	参数: 最后一个id，最后显示的数目
 	返回：第一个是一个字典，里面就一个字典数组activityList，字典每个字典有活动具体信息，失败为空
 		 第二个是失败状态信息，成功是空，失败有reason和code	'''
 	#查询
