@@ -14,7 +14,8 @@ class User(models.Model):
     SessionKey = models.CharField(max_length = 300)
     RequestID = models.CharField(max_length = 300)
     AvatarURL = models.CharField(max_length = 300)
-    Valid = models.BooleanField()
+    Valid = models.BooleanField(default = False)
+    Status = models.BooleanField(default = True)
 
 class Admin(models.Model):
     ID = models.AutoField(primary_key = True)

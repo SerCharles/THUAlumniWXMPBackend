@@ -78,6 +78,14 @@ def JoinActivity(request):
             Reason = "用户未登录！"
             ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
 
+    #判断是否被封禁
+    if Success:
+        JudgeResult = JudgeValid.JudgeUserValid(TheUserID)
+        if JudgeResult != True:
+            Success = False
+            Reason = "用户已被封禁，不能操作！！"
+            ErrorID = Constants.ERROR_CODE_INVALID_CHANGE
+
     #调用数据库函数添加活动
     if Success:
         try:
@@ -148,6 +156,14 @@ def QuitActivity(request):
             Success = False
             Reason = "用户未登录！"
             ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+
+    #判断是否被封禁
+    if Success:
+        JudgeResult = JudgeValid.JudgeUserValid(TheUserID)
+        if JudgeResult != True:
+            Success = False
+            Reason = "用户已被封禁，不能操作！！"
+            ErrorID = Constants.ERROR_CODE_INVALID_CHANGE
 
     #调用数据库函数删除活动
     if Success:
@@ -496,6 +512,14 @@ def ChangeUserRole(request):
             Reason = "用户未登录！"
             ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
 
+    #判断是否被封禁
+    if Success:
+        JudgeResult = JudgeValid.JudgeUserValid(TheSelfID)
+        if JudgeResult != True:
+            Success = False
+            Reason = "用户已被封禁，不能操作！！"
+            ErrorID = Constants.ERROR_CODE_INVALID_CHANGE
+
     #调用数据库函数
     if Success:
         try:
@@ -562,6 +586,14 @@ def AuditUser(request):
             Reason = "用户未登录！"
             ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
 
+    #判断是否被封禁
+    if Success:
+        JudgeResult = JudgeValid.JudgeUserValid(TheManagerID)
+        if JudgeResult != True:
+            Success = False
+            Reason = "用户已被封禁，不能操作！！"
+            ErrorID = Constants.ERROR_CODE_INVALID_CHANGE
+
     #调用数据库函数
     if Success:
         try:
@@ -626,6 +658,14 @@ def RemoveFromActivity(request):
             Success = False
             Reason = "用户未登录！"
             ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+
+    #判断是否被封禁
+    if Success:
+        JudgeResult = JudgeValid.JudgeUserValid(TheManagerID)
+        if JudgeResult != True:
+            Success = False
+            Reason = "用户已被封禁，不能操作！！"
+            ErrorID = Constants.ERROR_CODE_INVALID_CHANGE
 
     #调用数据库函数
     if Success:
@@ -697,6 +737,14 @@ def CheckInActivity(request):
             Success = False
             Reason = "用户未登录！"
             ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+
+    #判断是否被封禁
+    if Success:
+        JudgeResult = JudgeValid.JudgeUserValid(TheUserID)
+        if JudgeResult != True:
+            Success = False
+            Reason = "用户已被封禁，不能操作！！"
+            ErrorID = Constants.ERROR_CODE_INVALID_CHANGE
 
     #调用数据库函数添加活动
     if Success:
@@ -780,6 +828,14 @@ def ReportActivity(request):
             Success = False
             Reason = "用户未登录！"
             ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+
+    #判断是否被封禁
+    if Success:
+        JudgeResult = JudgeValid.JudgeUserValid(TheUserID)
+        if JudgeResult != True:
+            Success = False
+            Reason = "用户已被封禁，不能操作！！"
+            ErrorID = Constants.ERROR_CODE_INVALID_CHANGE
 
     #调用数据库函数添加活动
     if Success:

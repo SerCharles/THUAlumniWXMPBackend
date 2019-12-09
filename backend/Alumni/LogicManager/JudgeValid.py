@@ -33,6 +33,27 @@ from DataBase.models import ActivityType
 from Alumni.LogicManager.Constants import Constants
 from Alumni.LogicManager import GlobalFunctions
 
+#用户是否状态正常
+def JudgeUserValid(TheOpenID):
+	'''
+	描述：判断用户状态是否正常
+	参数：用户openid
+	返回：正常True不正常False
+	'''
+	try:
+		TheUser = User.objects.get(OpenID = TheOpenID)
+	except:
+		return False
+
+	try:
+		if TheUser.Status == True:
+			return True
+		else:
+			return False
+	except:
+		return False
+
+
 #院系，活动类型，教育类型等合法性判定
 def JudgeDepartmentValid(TheDepartment):
 	'''
@@ -169,6 +190,42 @@ def JudgeActivityStatusChangeValid(OldStatus, NewStatus):
 		Return["result"] = "fail"
 		Return["reason"] = Reason
 	return Return
+
+def JudgeActivityStatusGlobalValid(TheStatus):
+	'''
+	描述：判断活动全局状态是否合法
+	参数：活动状态id
+	返回：非法False，合法True
+	'''
+	if TheStatus in [Constants.ACTIVITY_STATUS_GLOBAL_EXCEPT, Constants.ACTIVITY_STATUS_GLOBAL_FINISH, \
+	Constants.ACTIVITY_STATUS_GLOBAL_NORMAL]:
+		return True
+	else:
+		return False
+
+def JudgeActivityStatusJoinValid(TheStatus):
+	'''
+	描述：判断活动加入状态是否合法
+	参数：活动状态id
+	返回：非法False，合法True
+	'''
+	if TheStatus in [Constants.ACTIVITY_STATUS_JOIN_BEFORE, Constants.ACTIVITY_STATUS_JOIN_CONTINUE, \
+	Constants.ACTIVITY_STATUS_JOIN_PAUSED, Constants.ACTIVITY_STATUS_JOIN_STOPPED]:
+		return True
+	else:
+		return False
+
+def JudgeActivityStatusCheckValid(TheStatus):
+	'''
+	描述：判断活动签到状态是否合法
+	参数：活动状态id
+	返回：非法False，合法True
+	'''
+	if TheStatus in [Constants.ACTIVITY_STATUS_CHECK_BEFORE, Constants.ACTIVITY_STATUS_CHECK_CONTINUE, \
+	Constants.ACTIVITY_STATUS_CHECK_PAUSED, Constants.ACTIVITY_STATUS_CHECK_STOPPED]:
+		return True
+	else:
+		return False
 
 #用户-活动状态判断
 def JudgeUserJoinedActivity(TheUserID, TheActivityID):

@@ -70,7 +70,7 @@ from Alumni.RequestHandler import OtherHandler
 from Alumni.RequestHandler import AdminHandler
 
 TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
-AdminManager.AddAdmin("kebab","reich")
+#AdminManager.AddAdmin("kebab","reich")
 
 
 urlpatterns = [
@@ -122,4 +122,15 @@ urlpatterns = [
     #处理管理员url
     url(r'^adminLogin$', AdminHandler.Login),
     url(r'^adminLogout$', AdminHandler.Logout),
+    url(r'^adminGetAllActivity$', AdminHandler.ShowAllActivity),
+    url(r'^adminGetReportList$', AdminHandler.ShowAllReport),
+    url(r'^adminModifyActivityStatus$', AdminHandler.ChangeActivityStatus),
+    url(r'^adminGetActivityInfo$', AdminHandler.ShowOneActivity),
+    url(r'^adminGetActivityReportList$', AdminHandler.ShowAllActivityReport),
+    url(r'^adminDeleteOneReport$', AdminHandler.DeleteOneReport),
+    url(r'^adminDeleteActivityReport$', AdminHandler.DeleteActivityReport),
+    url(r'^adminGetAllUser$', AdminHandler.ShowAllUser),
+    url(r'^adminUserData$', AdminHandler.ShowOneUser),
+    url(r'^adminModifyUser$', AdminHandler.ChangeUserStatus),
+
 ]
