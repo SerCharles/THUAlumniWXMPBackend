@@ -21,6 +21,7 @@ import base64
 import json
 import traceback
 import qrcode 
+import requests
 from django.db import models
 from DataBase.models import User
 from DataBase.models import Education
@@ -62,7 +63,7 @@ def GetCurrentTime():
 	功能：获取当前时间戳
 	参数：无
 	返回：int类型，时间戳（秒）
-    '''
+	'''
 	CurTime = int(time.time())
 	return CurTime
 
@@ -71,7 +72,7 @@ def JudgeWhetherDayEnd():
 	功能：判断当时是否是一天23点59分
 	参数：无
 	返回：True是，False否
-    '''
+	'''
 	CurTime = int(time.time())
 	TimeArray = time.localtime(CurTime) 
 	TimeString = time.strftime("%Y-%m-%d %H:%M:%S", TimeArray)
@@ -86,7 +87,7 @@ def JudgeWhetherSameDay(TimeStamp):
 	功能：在23：59判断是否某时间在当天
 	参数：待判断时间戳
 	返回：True是，False否
-    '''
+	'''
 	CurTime = int(time.time())
 	if CurTime + 60 >= TimeStamp and CurTime - TimeStamp < 86400:
 		return True
@@ -148,6 +149,63 @@ def GetAppIDWechat():
 	except:
 		Return = {}
 	return Return
+
+def SetAccessToken():
+	'''
+	描述：设置（从微信服务器拉取access token）
+	参数：无
+	返回：成功true失败False，后面有原因
+	'''	
+	Success = True
+	Return = {}
+	TheParam = {}
+	Reason = "--------"
+	if Success:
+		try:
+			TheAppID = GlobalVariables.objects.get(id = 1)
+			TheParam["appid"] = TheAppID.AppId
+			TheParam["secret"] = TheAppID.SecretId
+			TheParam["grant_type"] = "client_credential"
+		except:	
+			Success = False
+	if Success:
+		if 1:
+			TheRequest = requests.get("https://api.weixin.qq.com/cgi-bin/token", params = TheParam, timeout = (5,10), allow_redirects = True)
+		else:
+			Success = False
+			Reason = "网络繁忙，访问超时！"      
+	if Success:
+		try:
+			if TheRequest.status_code < 200 or TheRequest.status_code >= 400:
+				Success = False
+				Reason = "网络繁忙，访问微信失败！！"
+			TheJson = TheRequest.json()
+			print(TheJson)
+			if "errcode" in TheJson:
+				if TheJson["errcode"] != 0:
+					Success = False
+				else:
+					TheAppID.AccessToken = TheJson["access_token"]
+					TheAppID.save()
+			else:
+				TheAppID.AccessToken = TheJson["access_token"]
+				TheAppID.save()
+		except:
+			Success = False  
+	return Success, Reason
+
+def GetAccessToken():
+	'''
+	描述：获得access token
+	参数：无
+	返回：accesstoken，字符串,如果失败返回UNDEFINED
+	'''	
+	Return = {}
+	try:
+		TheAppID = GlobalVariables.objects.get(id = 1)
+		return TheAppID.AccessToken
+	except:
+		return "UNDEFINED"
 
 def GetAppIDThis():
 	'''
@@ -258,20 +316,20 @@ def ShowAllActivityType():
 	参数：无
 	返回：一个json字典，代表所有活动类型，格式如下
 	{
-  	"types": [
-    {
-      "name": "个人活动",
-      "children": [
-        {
-          "name": "聚餐"
-        },
-        {
-          "name": "聚餐"
-        }
-      ]
-    }
-  	],
-  	"level": 2
+	"types": [
+	{
+	  "name": "个人活动",
+	  "children": [
+		{
+		  "name": "聚餐"
+		},
+		{
+		  "name": "聚餐"
+		}
+	  ]
+	}
+	],
+	"level": 2
 	}
 	失败返回空字典
 	'''

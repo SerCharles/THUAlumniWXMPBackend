@@ -4,6 +4,7 @@ from django.db import models
 class GlobalVariables(models.Model):
     AppId = models.CharField(max_length = 100)
     SecretId = models.CharField(max_length = 100)
+    AccessToken = models.CharField(max_length = 300, default = "UNDEFINED")
 
 
 class User(models.Model):

@@ -26,6 +26,8 @@ from Alumni.LogicManager import JudgeValid
 from Alumni.DatabaseManager import UserManager
 from Alumni.DatabaseManager import ActivityManager
 from Alumni.DatabaseManager import UserActivityManager
+from Alumni.DatabaseManager import TimeManager
+
 
 def JoinActivity(request):
     '''
@@ -617,6 +619,13 @@ def AuditUser(request):
         Response.status_code = 200
     else:
         Response.status_code = 400
+    if Success:
+        if int(WhetherPass) == 1:
+            TimeManager.SendTimedMessageUser(TheActivityID, TheUserID, Constants.MESSAGE_TYPE_AUDIT_PASS)
+            print("send audit pass")
+        else:  
+            TimeManager.SendTimedMessageUser(TheActivityID, TheUserID, Constants.MESSAGE_TYPE_AUDIT_FAIL)
+            print("send audit fail")
     return Response
 
 def RemoveFromActivity(request):
@@ -690,6 +699,9 @@ def RemoveFromActivity(request):
         Response.status_code = 200
     else:
         Response.status_code = 400
+    if Success:
+        TimeManager.SendTimedMessageUser(TheActivityID, TheUserID, Constants.MESSAGE_TYPE_KICK)
+        print("send kick")
     return Response
 
 def CheckInActivity(request):
