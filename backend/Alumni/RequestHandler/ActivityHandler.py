@@ -26,6 +26,7 @@ from Alumni.LogicManager import JudgeValid
 from Alumni.DatabaseManager import UserManager
 from Alumni.DatabaseManager import ActivityManager
 from Alumni.DatabaseManager import UserActivityManager
+from Alumni.DatabaseManager import TimeManager
 
 
 def StartActivity(request):
@@ -416,6 +417,10 @@ def DeleteActivity(request):
         Response.status_code = 200
     else:
         Response.status_code = 400
+    if Success:
+        TimeManager.SendTimedMessageActivity(TheActivity, Constants.MESSAGE_TYPE_ACTIVITY_CANCEL)  
+        print("send cancel")
+
     return Response 
 
 def ChangeActivity(request):
@@ -439,10 +444,17 @@ def ChangeActivity(request):
     TheSession = ""
     TheUserID = ""
     Data = json.loads(request.body)
+    NeedPush = False
     #获取请求数据
     if Success:
         try:
             TheSession = request.GET.get("session")
+            try:
+                TheNeedPush = request.GET.get("needPush")
+                if int(TheNeedPush) > 0:
+                    NeedPush = True
+            except:
+                NeedPush = False
         except:
             Success = False
             Reason = "请求参数不合法！"
@@ -492,6 +504,12 @@ def ChangeActivity(request):
         Response.status_code = 200
     else:
         Response.status_code = 400
+
+    #发送消息
+    if Success and NeedPush:
+        TimeManager.SendTimedMessageActivity(Data["id"], Constants.MESSAGE_TYPE_ACTIVITY_CHANGE)  
+        print("send change")
+      
     return Response
 
 def ChangeActivityDetail(request):
@@ -654,51 +672,3 @@ def UploadActivityQRCode(request):
         Response.status_code = 400
     return Response 
 
-def ChangeActivityByTime(request):
-    '''
-    描述：按照时间自动修改活动
-    参数：request，什么都没有
-    返回：同上
-    '''
-    Success = True
-    Return = {}
-    Reason = ""
-    ErrorID = Constants.UNDEFINED_NUMBER
-
-    #调用数据库函数
-    if Success:
-        try:
-            Result = ActivityManager.ChangeActivityStatusByTime()
-            if Result != True:
-                Success = False
-                Reason = "更新正常活动状态失败！"
-                ErrorID = Constants.ERROR_CODE_UNKNOWN
-        except:
-            Success = False
-            Reason = "更新正常活动状态失败！"
-            ErrorID = Constants.ERROR_CODE_UNKNOWN
-    
-    if Success:
-        try:
-            Result = ActivityManager.ChangeActivityStatusFinish()
-            if Result != True:
-                Success = False
-                Reason = "更新活动结束状态失败！"
-                ErrorID = Constants.ERROR_CODE_UNKNOWN
-        except:
-            Success = False
-            Reason = "更新活动结束状态失败！"
-            ErrorID = Constants.ERROR_CODE_UNKNOWN
-
-    if Success:
-        Return["result"] = "success"
-    else:
-        Return["errmsg"] = Reason
-        Return["errid"] = ErrorID
-    Response = JsonResponse(Return)
-    if Success == True:
-        Response.status_code = 200
-    else:
-        Response.status_code = 400
-    return Response
-    

@@ -248,7 +248,7 @@ def ChangeActivityStatus(TheInfo):
 					Code = Constants.ERROR_CODE_INVALID_PARAMETER
 				TheActivity.StatusJoin = TheInfo["statusJoin"]
 			if "statusCheck" in TheInfo:
-				if JudgeValid.JudgeActivityStatusCheckalid(TheInfo["statusCheck"]) != True:
+				if JudgeValid.JudgeActivityStatusCheckValid(TheInfo["statusCheck"]) != True:
 					Success = False
 					Reason = "活动签到状态不合法！"
 					Code = Constants.ERROR_CODE_INVALID_PARAMETER

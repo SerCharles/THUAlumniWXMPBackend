@@ -647,6 +647,7 @@ def ChangeActivity(TheUserID, Information):
 			Reason = "活动状态为异常或结束，不能操作！"
 			Code = Constants.ERROR_CODE_INVALID_CHANGE
 	#读取修改数据
+	WhetherJudgeTime = False
 	if Success:
 		try:
 			if "name" in Information:
@@ -658,18 +659,22 @@ def ChangeActivity(TheUserID, Information):
 			else:
 				ChangeDictionary["place"] = TheActivity.Place
 			if "start" in Information:
+				WhetherJudgeTime = True
 				ChangeDictionary["start"] = int(GlobalFunctions.TimeStringToTimeStamp(Information["start"]))
 			else:
 				ChangeDictionary["start"] = TheActivity.StartTime
 			if "end" in Information:
+				WhetherJudgeTime = True
 				ChangeDictionary["end"] = int(GlobalFunctions.TimeStringToTimeStamp(Information["end"]))
 			else:
 				ChangeDictionary["end"] = TheActivity.EndTime
 			if "signupBeginAt" in Information:
+				WhetherJudgeTime = True
 				ChangeDictionary["signupBeginAt"] = int(GlobalFunctions.TimeStringToTimeStamp(Information["signupBeginAt"]))
 			else:
 				ChangeDictionary["signupBeginAt"] = TheActivity.SignUpStartTime	
 			if "signupStopAt" in Information:
+				WhetherJudgeTime = True
 				ChangeDictionary["signupStopAt"] = int(GlobalFunctions.TimeStringToTimeStamp(Information["signupStopAt"]))
 			else:
 				ChangeDictionary["signupStopAt"] = TheActivity.SignUpEndTime		
@@ -744,7 +749,7 @@ def ChangeActivity(TheUserID, Information):
 			Reason = "待修改数据格式不合法"			
 			Code = Constants.ERROR_CODE_INVALID_PARAMETER				
 	#判断时间，人数等修改后是否有效
-	if Success:
+	if Success and WhetherJudgeTime:
 		try:
 			JudgeResult = JudgeValid.JudgeParameterValid(ChangeDictionary["curTime"], ChangeDictionary["start"], ChangeDictionary["end"], \
 			ChangeDictionary["signupBeginAt"], ChangeDictionary["signupStopAt"], ChangeDictionary["curUser"], ChangeDictionary["minUser"], \
@@ -924,10 +929,10 @@ def ChangeAdvancedRules(TheActivityID, NewRules):
 			Success = False
 	return Success
 
-def AdvancedSearch(TheUserID, Information):
+def AdvancedSearch(TheUserID, Information, TheLastSeenID, TheMost):
 	'''
 	描述：高级检索
-	参数：用户openid，检索信息
+	参数：用户openid，检索信息,上一个id，最多
 	返回：Result, errorinfo
 	'''
 	Success = True
@@ -1097,12 +1102,30 @@ def AdvancedSearch(TheUserID, Information):
 			Success = False
 			Reason = "高级检索失败"
 			Code = Constants.ERROR_CODE_UNKNOWN
+
+	ReturnList = []
+	#分页显示
+	if Success:
+		CurrentNum = 0
+		WhetherFindStart = False
+		if TheLastSeenID == Constants.UNDEFINED_NUMBER:
+			WhetherFindStart = True
+		for item in NewSearchResult:
+			if WhetherFindStart == True:
+				if TheMost != Constants.UNDEFINED_NUMBER and CurrentNum >= TheMost:
+					break
+				ReturnList.append(item)
+				CurrentNum += 1 
+			if TheLastSeenID != Constants.UNDEFINED_NUMBER and item["id"] == TheLastSeenID:
+				WhetherFindStart = True
+				
+
 	#print(NewSearchResult)
 	if Success == False:
 		ErrorInfo["reason"] = Reason
 		ErrorInfo["code"] = Code
 	else:
-		Return["activityList"] = NewSearchResult
+		Return["activityList"] = ReturnList
 		ErrorInfo = {}
 	return Return, ErrorInfo
 
@@ -1150,82 +1173,5 @@ def UploadActivityQRCode(TheUserID, TheActivityID):
 		TheImageName = None
 	return Result, TheImageName
 
-def ChangeActivityStatusByTime():
-	'''
-	描述：根据时间修改所有活动数据
-	参数: 无
-	返回：成功True， 失败False
-	'''
-	Success = True
-	if Success:
-		try:
-			Info = Activity.objects.all()
-		except:
-			Success = False
-	if Success:
-		try:
-			for item in Info:
-				if item.StatusGlobal != Constants.ACTIVITY_STATUS_GLOBAL_NORMAL:
-					continue
-				TheCurrentTime = GlobalFunctions.GetCurrentTime()
-				TheJoinStartTime = item.SignUpStartTime
-				TheJoinEndTime = item.SignUpEndTime
-				TheCheckStartTime = item.StartTime
-				TheCheckEndTime = item.EndTime
-				TheCurrentUser = item.CurrentUser
-				TheMinUser = item.MinUser
-				if item.StatusJoin == Constants.ACTIVITY_STATUS_JOIN_BEFORE:
-					if GlobalFunctions.JudgeWhetherSameMinute(TheJoinStartTime):
-						item.StatusJoin = Constants.ACTIVITY_STATUS_JOIN_CONTINUE
-				if item.StatusJoin != Constants.ACTIVITY_STATUS_JOIN_STOPPED:
-					if GlobalFunctions.JudgeWhetherSameMinute(TheJoinEndTime):
-						item.StatusJoin = Constants.ACTIVITY_STATUS_JOIN_STOPPED
-				if item.StatusCheck == Constants.ACTIVITY_STATUS_CHECK_BEFORE:
-					if GlobalFunctions.JudgeWhetherSameMinute(TheCheckStartTime) and TheCurrentUser >= TheMinUser:
-						item.StatusCheck = Constants.ACTIVITY_STATUS_CHECK_CONTINUE
-				if item.StatusCheck != Constants.ACTIVITY_STATUS_CHECK_STOPPED:
-					if GlobalFunctions.JudgeWhetherSameMinute(TheCheckEndTime):
-						item.StatusCheck = Constants.ACTIVITY_STATUS_CHECK_STOPPED
-				item.save()
-		except:
-			Success = False
-	return Success
-
-def ChangeActivityStatusFinish():
-	'''
-	描述：根据时间（23：59）修改所有当天结束的活动为finish，并且修改成员状态
-	参数: 无
-	返回：成功True， 失败False
-	'''
-	Success = True
-	if GlobalFunctions.JudgeWhetherDayEnd() != True:
-		return True
-	if Success:
-		try:
-			Info = Activity.objects.all()
-		except:
-			Success = False
-	if Success:
-		try:
-			for item in Info:
-				if item.StatusGlobal != Constants.ACTIVITY_STATUS_GLOBAL_NORMAL:
-					continue
-				TheCheckEndTime = item.EndTime
-				if GlobalFunctions.JudgeWhetherSameDay(TheCheckEndTime) != True:
-					continue
-				item.StatusGlobal = Constants.ACTIVITY_STATUS_GLOBAL_FINISH
-				item.save()
-				TheJoinActivityList = JoinInformation.objects.filter(ActivityId = item)
-				for one in TheJoinActivityList:
-					if one.Status == Constants.USER_STATUS_WAITVALIDATE:
-						one.Status = Constants.USER_STATUS_REFUSED
-					elif one.Status == Constants.USER_STATUS_JOINED:
-						one.Status = Constants.USER_STATUS_FINISHED_WITHOUT_CHECK
-					elif one.Status == Constants.USER_STATUS_CHECKED:
-						one.Status = Constants.USER_STATUS_FINISHED
-					one.save()
-		except:
-			Success = False
-	return Success
 
 

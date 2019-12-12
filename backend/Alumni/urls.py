@@ -62,6 +62,7 @@ from Alumni.DatabaseManager import ActivityManager
 from Alumni.DatabaseManager import UserActivityManager
 from Alumni.DatabaseManager import SearchAndRecommend
 from Alumni.DatabaseManager import AdminManager
+from Alumni.DatabaseManager import TimeManager
 from Alumni.RequestHandler import UserHandler
 from Alumni.RequestHandler import ActivityHandler
 from Alumni.RequestHandler import UserActivityHandler
@@ -70,6 +71,8 @@ from Alumni.RequestHandler import OtherHandler
 from Alumni.RequestHandler import AdminHandler
 
 TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
+print(GlobalFunctions.SetAccessToken())
+print(GlobalFunctions.GetAccessToken())
 #AdminManager.AddAdmin("kebab","reich")
 
 
@@ -90,7 +93,7 @@ urlpatterns = [
     url(r'^getActivityDescription$', ActivityHandler.QueryActivityDetail),
     url(r'^deleteActivity$', ActivityHandler.DeleteActivity),
     url(r'^generateCheckinCode$', ActivityHandler.UploadActivityQRCode),
-    url(r'^changeActivityByTime$', ActivityHandler.ChangeActivityByTime),
+    url(r'^changeActivityByTime$', TimeManager.ChangeActivityByTime),
 
     #处理用户-活动请求url
     url(r'^joinActivity$', UserActivityHandler.JoinActivity),

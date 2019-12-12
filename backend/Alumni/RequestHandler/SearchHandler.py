@@ -49,11 +49,21 @@ def SearchActivity(request):
     TheSession = ""
     TheUserID = ""
     SearchWord = ""
+    TheLastSeenID = Constants.UNDEFINED_NUMBER
+    TheMostNumber = Constants.UNDEFINED_NUMBER
     #获取请求数据
     if Success:
         try:
             TheSession = request.GET.get("session")
             SearchWord = request.GET.get("searchWord")
+            try:
+                TheLastSeenID = int(request.GET.get("lastSeenId"))
+            except:
+                TheLastSeenID = Constants.UNDEFINED_NUMBER
+            try:
+                TheMostNumber = int(request.GET.get("most"))
+            except:
+                TheMostNumber = Constants.UNDEFINED_NUMBER
         except:
             Success = False
             Reason = "请求参数不合法！"
@@ -76,7 +86,7 @@ def SearchActivity(request):
     if Success:
         try:
             TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
-            Info = TheSearcher.SearchInfo(SearchWord)
+            Info = TheSearcher.SearchInfo(SearchWord, TheLastSeenID, TheMostNumber)
             #print(Info)
             if "activityList" not in Info:
                 Success = False
@@ -124,10 +134,20 @@ def SearchActivityAdvanced(request):
     TheUserID = ""
     SearchWord = ""
     Data = json.loads(request.body)
+    TheLastSeenID = Constants.UNDEFINED_NUMBER
+    TheMostNumber = Constants.UNDEFINED_NUMBER
     #获取请求数据
     if Success:
         try:
             TheSession = request.GET.get("session")
+            try:
+                TheLastSeenID = int(request.GET.get("lastSeenId"))
+            except:
+                TheLastSeenID = Constants.UNDEFINED_NUMBER
+            try:
+                TheMostNumber = int(request.GET.get("most"))
+            except:
+                TheMostNumber = Constants.UNDEFINED_NUMBER
         except:
             Success = False
             Reason = "请求参数不合法！"
@@ -149,7 +169,7 @@ def SearchActivityAdvanced(request):
     #调用数据库函数
     if Success:
         try:
-            Result, ErrorInfo = ActivityManager.AdvancedSearch(TheUserID, Data)
+            Result, ErrorInfo = ActivityManager.AdvancedSearch(TheUserID, Data, TheLastSeenID, TheMostNumber)
             #print(Info)
             if Result == {}:
                 Success = False
@@ -197,11 +217,13 @@ def RecommendActivityByActivity(request):
     TheUserID = ""
     SearchWord = ""
     TheActivityID = 0
+    Most = Constants.UNDEFINED_NUMBER
     #获取请求数据
     if Success:
         try:
             TheSession = request.GET.get("session")
             TheActivityID = request.GET.get("activityId")
+            Most = int(request.GET.get("most"))
         except:
             Success = False
             Reason = "请求参数不合法！"
@@ -229,10 +251,13 @@ def RecommendActivityByActivity(request):
                 Success = False
                 Reason = ErrorInfo["reason"]
                 ErrorID = ErrorInfo["code"]
+            else:
+                Info["activityList"] = SearchAndRecommend.ShowRandomInfo(Info["activityList"], Most)
         except:
             Success = False
             Reason = "推荐活动失败！"
             ErrorID = Constants.ERROR_CODE_NOT_FOUND
+
 
     if Success:
         Return = Info
@@ -265,10 +290,13 @@ def RecommendActivityByUser(request):
     ErrorID = Cons = ""
     TheUserID = ""
     SearchWord = ""
+    Most = Constants.UNDEFINED_NUMBER
+
     #获取请求数据
     if Success:
         try:
             TheSession = request.GET.get("session")
+            Most = int(request.GET.get("most"))
         except:
             Success = False
             Reason = "请求参数不合法！"
@@ -296,10 +324,14 @@ def RecommendActivityByUser(request):
                 Success = False
                 Reason = ErrorInfo["reason"]
                 ErrorID = ErrorInfo["code"]
+            else:
+                Info["activityList"] = SearchAndRecommend.ShowRandomInfo(Info["activityList"], Most)
         except:
             Success = False
             Reason = "推荐活动失败！"
             ErrorID = Constants.ERROR_CODE_NOT_FOUND
+
+
 
     if Success:
         Return = Info

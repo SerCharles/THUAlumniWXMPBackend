@@ -36,6 +36,7 @@ from DataBase.models import ReportInformation
 from Alumni.LogicManager.Constants import Constants
 from Alumni.DatabaseManager import AdminManager
 from Alumni.DatabaseManager import UserManager
+from Alumni.DatabaseManager import TimeManager
 
 
 def Login(request):
@@ -250,6 +251,10 @@ def ChangeActivityStatus(request):
         Response.status_code = 200
     else:
         Response.status_code = 400
+    if Success and "statusGlobal" in TheInfo and TheInfo["statusGlobal"] == Constants.ACTIVITY_STATUS_GLOBAL_EXCEPT:
+        TimeManager.SendTimedMessageActivity(TheInfo["id"], Constants.MESSAGE_TYPE_ACTIVITY_FORBIDDEN)  
+        print("send forbid")
+
     return Response
 
 def ShowOneActivity(request):
