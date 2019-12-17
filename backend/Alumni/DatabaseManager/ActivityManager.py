@@ -109,6 +109,14 @@ def AddActivity(ID, Information):
 				Success = False
 				Reason = "活动状态必须是正常状态！" 
 				Code = Constants.ERROR_CODE_INVALID_CHANGE
+			if JudgeValid.JudgeActivityStatusJoinValid(TheStatusJoin) != True:
+				Success = False
+				Reason = "活动报名状态非法！" 
+				Code = Constants.ERROR_CODE_INVALID_PARAMETER
+			if JudgeValid.JudgeActivityStatusCheckValid(TheStatusCheck) != True:
+				Success = False
+				Reason = "活动报名状态非法！" 
+				Code = Constants.ERROR_CODE_INVALID_PARAMETER
 		except:
 			Success = False
 			Reason = "参数不合法，添加活动失败!"
@@ -770,6 +778,14 @@ def ChangeActivity(TheUserID, Information):
 				Success = False
 				Reason = JudgeResult["reason"]
 				Code = Constants.ERROR_CODE_INVALID_CHANGE
+			if JudgeValid.JudgeActivityStatusJoinValid(ChangeDictionary["statusJoin"]) != True:
+				Success = False
+				Reason = "待修改的活动加入状态不合法"	
+				Code = Constants.ERROR_CODE_INVALID_PARAMETER	
+			if JudgeValid.JudgeActivityStatusCheckValid(ChangeDictionary["statusCheck"]) != True:
+				Success = False
+				Reason = "待修改的活动签到状态不合法"	
+				Code = Constants.ERROR_CODE_INVALID_PARAMETER	
 		except:
 			Success = False
 			Reason = "待修改数据格式不合法"	
