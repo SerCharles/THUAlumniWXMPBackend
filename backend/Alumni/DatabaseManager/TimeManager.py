@@ -10,6 +10,7 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 #import numpy as np
 #from io import BytesIO
+import requests
 import random
 import string
 import sqlite3
@@ -35,6 +36,9 @@ from Alumni.LogicManager.Constants import Constants
 from Alumni.LogicManager import GlobalFunctions
 from Alumni.LogicManager import JudgeValid
 from Alumni.DatabaseManager import SearchAndRecommend
+
+# GlobalFunctions.SetAccessToken()
+lastAccessTokenSetTime = 0
 
 def ChangeActivityStatusByTime():
 	'''
@@ -120,8 +124,28 @@ def CheckActivitySendMessage():
 	参数: 无
 	返回：无
 	'''
-    WhetherSGLTCL = True
-    print("Anschluss ueber alles!")
+    Success = True
+    if Success:
+        if(int(time.time()) - lastAccessTokenSetTime > 5400):
+            GlobalFunctions.setAccessToken()
+    if Success:
+        try:
+            Info = Activity.objects.all()
+        except:
+            Success = False
+    if Success:
+        try:
+            for item in Info:
+                if item.StatusGlobal != Constants.ACTIVITY_STATUS_GLOBAL_NORMAL:
+                    continue
+                TheStartTime = item.StartTime
+                if GlobalFunctions.JudgeWhetherSameMinute(TheStartTime - Constants.TIME_BEFORE_MESSAGE_ACTIVITY_WILL_START_HOUR):
+                    SendTimedMessageActivity(item.ID, Constants.MESSAGE_TYPE_ACTIVITY_WILL_START_HOUR)
+                elif GlobalFunctions.JudgeWhetherSameMinute(TheStartTime - Constants.TIME_BEFORE_MESSAGE_ACTIVITY_WILL_START_MINUTE):
+                    SendTimedMessageActivity(item.ID, Constants.MESSAGE_TYPE_ACTIVITY_WILL_START_MINUTE)
+        except:
+            Success = False
+    return Success
 
 def SendTimedMessage(TheActivityItem, TheUserItem, TheMessageType):
     '''
@@ -129,8 +153,101 @@ def SendTimedMessage(TheActivityItem, TheUserItem, TheMessageType):
 	参数: 活动的对象，用户对象，消息类型（作为数字定义在constants.py里）
 	返回：无
 	'''
-    print("Anschluss ueber alles!")
-    WhetherSGLTCL = True
+    Success = True
+    obj = {}
+    data = {}
+    pagePrefix = "/pages/ActivityList/ActivityDetail/ActivityDetail?activityId="
+    if Success:
+        try:
+            if (TheMessageType == Constants.MESSAGE_TYPE_ACTIVITY_CHANGE or
+                    TheMessageType == Constants.MESSAGE_TYPE_KICK or
+                    TheMessageType == Constants.MESSAGE_TYPE_ACTIVITY_CANCEL or
+                    TheMessageType == Constants.MESSAGE_TYPE_ACTIVITY_FORBIDDEN):
+                obj["template_id"] = "LEoLo9UsF2by_4UGypKf2v7YLXeYRRGGjskOa0iJzZY"
+                data["thing2"] = {"value": TheActivityItem.Name}
+                if (TheMessageType == Constants.MESSAGE_TYPE_ACTIVITY_CHANGE):
+                    data["date4"] = {"value": time.strftime("%Y{y}%m{m}%d{d} %H:%M", time.localtime(TheActivityItem.StartTime)).format(y='年', m='月', d='日')}
+                    data["thing5"] = {"value": TheActivityItem.Place}
+                detail = None
+                if (TheMessageType == Constants.MESSAGE_TYPE_KICK):
+                    detail = "您被活动管理员踢出了该活动。如有问题请与活动主办方联系。"
+                elif (TheMessageType == Constants.MESSAGE_TYPE_ACTIVITY_CANCEL):
+                    detail = "活动主办方取消了该活动，请您知悉。如有问题请与活动主办方联系。"
+                elif (TheMessageType == Constants.MESSAGE_TYPE_ACTIVITY_FORBIDDEN):
+                    detail = "由于可能存在违反国家法律法规及政策、校友会章程、平台运营规则等行为，该活动已被封禁，请您知悉。"
+                elif (TheMessageType == Constants.MESSAGE_TYPE_ACTIVITY_CHANGE):
+                    detail = "活动安排发生了变更，请您知悉。点击可查看活动详细信息。"
+                data["thing6"] = {"value": detail}
+            elif (TheMessageType == Constants.MESSAGE_TYPE_AUDIT_PASS or TheMessageType == Constants.MESSAGE_TYPE_AUDIT_FAIL):
+                obj["template_id"] = "j9EPrZx9MAQ5SjbN1aCYHImxymn6ZEziJLgQEcbuXSk"
+                data["thing2"] = {"value": TheActivityItem.Name}
+                data["date3"] = {"value": time.strftime("%Y{y}%m{m}%d{d} %H:%M", time.localtime(TheActivityItem.StartTime)).format(y='年', m='月', d='日')}
+                if(TheMessageType == Constants.MESSAGE_TYPE_AUDIT_PASS):
+                    data["thing7"] = {"value": "您的加入申请已被通过"}
+                    data["pharse1"] = {"value": "通过"}
+                elif (TheMessageType == Constants.MESSAGE_TYPE_AUDIT_FAIL):
+                    data["thing7"] = {"value": "如有疑问请联系活动主办方。"}
+                    data["pharse1"] = {"value": "不通过"}
+            elif (TheMessageType == Constants.MESSAGE_TYPE_ACTIVITY_WILL_START_HOUR):
+                obj["template_id"] = "u-UA76noUE9_9g2ZVX53W9DQKz3x-Tn1914KHphfRXM"
+                data["thing7"] = {"value": "您报名的活动将在明天举行，请合理安排行程"}
+                data["thing4"] = {"value": TheActivityItem.Name}
+                data["date3"] = {"value": time.strftime("%Y{y}%m{m}%d{d} %H:%M", time.localtime(TheActivityItem.StartTime)).format(y='年', m='月', d='日')}
+                data["thing6"] = {"value": TheActivityItem.Place}
+            elif (TheMessageType == Constants.MESSAGE_TYPE_ACTIVITY_WILL_START_MINUTE):
+                obj["template_id"] = "u-UA76noUE9_9g2ZVX53Wz3QZ-IgE4ECwLVxWLIJlZ8"
+                data["thing7"] = {"value": "您报名的活动即将举行，请按时到场并签到"}
+                data["thing4"] = {"value": TheActivityItem.Name}
+                data["date3"] = {"value": time.strftime("%Y{y}%m{m}%d{d} %H:%M", time.localtime(TheActivityItem.StartTime)).format(y='年', m='月', d='日')}
+                data["thing6"] = {"value": TheActivityItem.Place}
+            else:
+                Success = False
+                Reason = "没有对应的消息类型"
+        except:
+            Success = False
+            Reason = "产生消息阶段异常"
+
+    if Success:
+        try:
+            obj["touser"] = TheUserItem.OpenID
+            obj["page"] = pagePrefix + str(TheActivityItem.ID)
+            obj["data"] = data
+        except:
+            Success = False
+            Reason = "产生消息阶段2异常"
+
+    if Success:
+        try:
+            url = "https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=" + GlobalFunctions.GetAccessToken()
+            TheRequest = requests.post(url, data = json.dumps(obj), timeout = (5,10), allow_redirects = True)
+        except:
+            Success = False
+            ErrorId = Constants.ERROR_CODE_NETWORK_ERROR
+            Reason = "网络繁忙，访问超时！"
+
+    if Success:
+        try:
+            if TheRequest.status_code < 200 or TheRequest.status_code >= 400:
+                Success = False
+                ErrorId = Constants.ERROR_CODE_NETWORK_ERROR
+                Reason = "网络繁忙，访问微信失败！！"
+            TheJson = TheRequest.json()
+            #print(TheJson)
+            if "errcode" in TheJson:
+                if TheJson["errcode"] == -1:
+                    Success = False
+                    ErrorId = Constants.ERROR_CODE_NETWORK_ERROR
+                    Reason = "网络繁忙，访问微信失败！"
+                elif TheJson["errcode"] != 0:
+                    Success = False
+                    ErrorId = Constants.ERROR_CODE_NETWORK_ERROR
+                    Reason = TheJson["errmsg"]
+        except:
+            Success = False
+            ErrorId = Constants.ERROR_CODE_NETWORK_ERROR
+            Reason = "网络繁忙，访问微信失败！"
+
+    return Success
 
 def SendTimedMessageUser(TheActivityID, TheOpenID, TheMessageType):
     '''
@@ -150,6 +267,7 @@ def SendTimedMessageUser(TheActivityID, TheOpenID, TheMessageType):
         except:
             Success = False
 
+
 def SendTimedMessageActivity(TheActivityID, TheMessageType):
     '''
 	描述：给一个活动的所有可行用户推送活动消息
@@ -168,8 +286,6 @@ def SendTimedMessageActivity(TheActivityID, TheMessageType):
                 SendTimedMessage(TheActivity, TheUser, TheMessageType)
         except:
             Success = False
-
-#todo:获取templateID，生成消息本身等
 
 
 def ChangeActivityByTime(request):
@@ -195,6 +311,18 @@ def ChangeActivityByTime(request):
             Success = False
             Reason = "更新正常活动状态失败！"
             ErrorID = Constants.ERROR_CODE_UNKNOWN
+
+    if Success:
+        try:
+            Result = CheckActivitySendMessage()
+            if Result != True:
+                Success = False
+                Reason = "模版消息检查失败！"
+                ErrorID = Constants.ERROR_CODE_UNKNOWN
+        except:
+            Success = False
+            Reason = "模版消息检查失败！"
+            ErrorID = Constants.ERROR_CODE_UNKNOWN
     
     if Success:
         try:
@@ -219,4 +347,9 @@ def ChangeActivityByTime(request):
     else:
         Response.status_code = 400
     return Response
-    
+
+
+def Testt(request):
+    ChangeActivityByTime(None)
+    SendTimedMessageUser("10", "o9H2m5NRduLhddc_e-npjO2uBkTk", Constants.MESSAGE_TYPE_ACTIVITY_WILL_START_HOUR)
+    return JsonResponse({})
