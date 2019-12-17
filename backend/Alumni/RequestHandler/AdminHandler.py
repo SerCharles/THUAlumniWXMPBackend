@@ -700,9 +700,10 @@ def ChangeUserStatus(request):
     TheStatus = Constants.UNDEFINED_NUMBER
     if Success:
         try:
+            TheBody = json.loads(request.body)
             TheSession = request.GET.get("session")
-            TheUserID = request.GET.get("openId")
-            TheStatus = int(request.GET.get("status"))
+            TheUserID = TheBody["openId"]
+            TheStatus = int(TheBody["status"])
             if TheSession == 'UNDEFINED':
                 Success = False
                 Reason = "请求参数不合法！"

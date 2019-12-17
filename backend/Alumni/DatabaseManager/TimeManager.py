@@ -127,7 +127,7 @@ def CheckActivitySendMessage():
     Success = True
     if Success:
         if(int(time.time()) - lastAccessTokenSetTime > 5400):
-            GlobalFunctions.setAccessToken()
+            GlobalFunctions.SetAccessToken()
     if Success:
         try:
             Info = Activity.objects.all()
