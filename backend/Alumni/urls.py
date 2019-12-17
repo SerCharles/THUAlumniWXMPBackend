@@ -136,4 +136,7 @@ urlpatterns = [
     url(r'^adminUserData$', AdminHandler.ShowOneUser),
     url(r'^adminModifyUser$', AdminHandler.ChangeUserStatus),
 
+    #测试url
+    url(r'^testt$', TimeManager.Testt)
+
 ]
