@@ -414,7 +414,7 @@ def JoinActivity(TheUserID, TheActivityID, TheJoinReason):
 				TheJoinReason = None
 			else:
 				#待审核没有reason不行
-				if TheJoinReason == None:
+				if TheJoinReason == None or len(TheJoinReason) == 0:
 					Success = False
 					Reason = "未输入报名原因！"
 					Code = Constants.ERROR_CODE_NO_REASON

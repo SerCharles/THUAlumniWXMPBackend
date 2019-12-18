@@ -30,317 +30,317 @@ from Alumni.DatabaseManager import SearchAndRecommend
 
 
 def SearchActivity(request):
-    '''
-    描述：处理输入关键词搜索活动请求
-    参数：request
-    成功返回活动列表
-    失败则是
-    {
-    "errid":xxx,
-    "errmsg":"xxxx"
-    }
-    '''
-    Success = True
-    Return = {}
-    Info = {}
-    ErrorInfo = {}
-    Reason = ""
-    ErrorID = Constants.UNDEFINED_NUMBER
-    TheSession = ""
-    TheUserID = ""
-    SearchWord = ""
-    TheLastSeenID = Constants.UNDEFINED_NUMBER
-    TheMostNumber = Constants.UNDEFINED_NUMBER
-    #获取请求数据
-    if Success:
-        try:
-            TheSession = request.GET.get("session")
-            SearchWord = request.GET.get("searchWord")
-            try:
-                TheLastSeenID = int(request.GET.get("lastSeenId"))
-            except:
-                TheLastSeenID = Constants.UNDEFINED_NUMBER
-            try:
-                TheMostNumber = int(request.GET.get("most"))
-            except:
-                TheMostNumber = Constants.UNDEFINED_NUMBER
-        except:
-            Success = False
-            Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
-    
-    #判断是否登录，获取待查询的openid
-    if Success:
-        try:
-            TheUserID = UserManager.GetCurrentUser(TheSession)
-            if TheUserID == None:
-                Success = False
-                Reason = "用户未登录！"
-                ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
-        except:
-            Success = False
-            Reason = "用户未登录！"
-            ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+	'''
+	描述：处理输入关键词搜索活动请求
+	参数：request
+	成功返回活动列表
+	失败则是
+	{
+	"errid":xxx,
+	"errmsg":"xxxx"
+	}
+	'''
+	Success = True
+	Return = {}
+	Info = {}
+	ErrorInfo = {}
+	Reason = ""
+	ErrorID = Constants.UNDEFINED_NUMBER
+	TheSession = ""
+	TheUserID = ""
+	SearchWord = ""
+	TheLastSeenID = Constants.UNDEFINED_NUMBER
+	TheMostNumber = Constants.UNDEFINED_NUMBER
+	#获取请求数据
+	if Success:
+		try:
+			TheSession = request.GET.get("session")
+			SearchWord = request.GET.get("searchWord")
+			try:
+				TheLastSeenID = int(request.GET.get("lastSeenId"))
+			except:
+				TheLastSeenID = Constants.UNDEFINED_NUMBER
+			try:
+				TheMostNumber = int(request.GET.get("most"))
+			except:
+				TheMostNumber = Constants.UNDEFINED_NUMBER
+		except:
+			Success = False
+			Reason = "请求参数不合法！"
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+	
+	#判断是否登录，获取待查询的openid
+	if Success:
+		try:
+			TheUserID = UserManager.GetCurrentUser(TheSession)
+			if TheUserID == None:
+				Success = False
+				Reason = "用户未登录！"
+				ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+		except:
+			Success = False
+			Reason = "用户未登录！"
+			ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
 
-    #调用数据库函数
-    if Success:
-        try:
-            TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
-            Info = TheSearcher.SearchInfo(SearchWord, TheLastSeenID, TheMostNumber)
-            #print(Info)
-            if "activityList" not in Info:
-                Success = False
-                Reason = "搜索活动失败!"
-                ErrorID = Constants.ERROR_CODE_NOT_FOUND
-            elif Info["activityList"] == []:
-                Success = False
-                Reason = "未找到任何符合条件的活动！"
-                ErrorID = Constants.ERROR_CODE_RECOMMEND
-        except:
-            Success = False
-            Reason = "搜索活动失败！"
-            ErrorID = Constants.ERROR_CODE_NOT_FOUND
+	#调用数据库函数
+	if Success:
+		try:
+			TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
+			Info = TheSearcher.SearchInfo(SearchWord, TheLastSeenID, TheMostNumber)
+			#print(Info)
+			if "activityList" not in Info:
+				Success = False
+				Reason = "搜索活动失败!"
+				ErrorID = Constants.ERROR_CODE_NOT_FOUND
+			elif Info["activityList"] == []:
+				Success = False
+				Reason = "未找到任何符合条件的活动！"
+				ErrorID = Constants.ERROR_CODE_RECOMMEND
+		except:
+			Success = False
+			Reason = "搜索活动失败！"
+			ErrorID = Constants.ERROR_CODE_NOT_FOUND
 
-    if Success:
-        Return = Info
-    else:
-        Return["errid"] = ErrorID
-        Return["errmsg"] = Reason
-    Response = JsonResponse(Return)
-    if Success == True:
-        Response.status_code = 200
-    else:
-        Response.status_code = 400
-    return Response 
+	if Success:
+		Return = Info
+	else:
+		Return["errid"] = ErrorID
+		Return["errmsg"] = Reason
+	Response = JsonResponse(Return)
+	if Success == True:
+		Response.status_code = 200
+	else:
+		Response.status_code = 400
+	return Response 
 
 def SearchActivityAdvanced(request):
-    '''
-    描述：处理高级搜索活动请求
-    参数：request
-    成功返回活动列表
-    失败则是
-    {
-    "errid":xxx,
-    "errmsg":"xxxx"
-    }
-    '''
-    Success = True
-    Return = {}
-    Info = {}
-    ErrorInfo = {}
-    Reason = ""
-    ErrorID = Constants.UNDEFINED_NUMBER
-    TheSession = ""
-    TheUserID = ""
-    SearchWord = ""
-    Data = json.loads(request.body)
-    TheLastSeenID = Constants.UNDEFINED_NUMBER
-    TheMostNumber = Constants.UNDEFINED_NUMBER
-    #获取请求数据
-    if Success:
-        try:
-            TheSession = request.GET.get("session")
-            try:
-                TheLastSeenID = int(request.GET.get("lastSeenId"))
-            except:
-                TheLastSeenID = Constants.UNDEFINED_NUMBER
-            try:
-                TheMostNumber = int(request.GET.get("most"))
-            except:
-                TheMostNumber = Constants.UNDEFINED_NUMBER
-        except:
-            Success = False
-            Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
-    
-    #判断是否登录，获取待查询的openid
-    if Success:
-        try:
-            TheUserID = UserManager.GetCurrentUser(TheSession)
-            if TheUserID == None:
-                Success = False
-                Reason = "用户未登录！"
-                ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
-        except:
-            Success = False
-            Reason = "用户未登录！"
-            ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+	'''
+	描述：处理高级搜索活动请求
+	参数：request
+	成功返回活动列表
+	失败则是
+	{
+	"errid":xxx,
+	"errmsg":"xxxx"
+	}
+	'''
+	Success = True
+	Return = {}
+	Info = {}
+	ErrorInfo = {}
+	Reason = ""
+	ErrorID = Constants.UNDEFINED_NUMBER
+	TheSession = ""
+	TheUserID = ""
+	SearchWord = ""
+	Data = json.loads(request.body)
+	TheLastSeenID = Constants.UNDEFINED_NUMBER
+	TheMostNumber = Constants.UNDEFINED_NUMBER
+	#获取请求数据
+	if Success:
+		try:
+			TheSession = request.GET.get("session")
+			try:
+				TheLastSeenID = int(request.GET.get("lastSeenId"))
+			except:
+				TheLastSeenID = Constants.UNDEFINED_NUMBER
+			try:
+				TheMostNumber = int(request.GET.get("most"))
+			except:
+				TheMostNumber = Constants.UNDEFINED_NUMBER
+		except:
+			Success = False
+			Reason = "请求参数不合法！"
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+	
+	#判断是否登录，获取待查询的openid
+	if Success:
+		try:
+			TheUserID = UserManager.GetCurrentUser(TheSession)
+			if TheUserID == None:
+				Success = False
+				Reason = "用户未登录！"
+				ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+		except:
+			Success = False
+			Reason = "用户未登录！"
+			ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
 
-    #调用数据库函数
-    if Success:
-        try:
-            Result, ErrorInfo = ActivityManager.AdvancedSearch(TheUserID, Data, TheLastSeenID, TheMostNumber)
-            #print(Info)
-            if Result == {}:
-                Success = False
-                Reason = ErrorInfo["reason"]
-                ErrorID = ErrorInfo["code"]
-            elif Result["activityList"] == []:
-                Success = False
-                Reason = "未找到任何符合条件的活动！"
-                ErrorID = Constants.ERROR_CODE_RECOMMEND
-        except:
-            Success = False
-            Reason = "搜索活动失败！"
-            ErrorID = Constants.ERROR_CODE_UNKNOWN
+	#调用数据库函数
+	if Success:
+		try:
+			Result, ErrorInfo = ActivityManager.AdvancedSearch(TheUserID, Data, TheLastSeenID, TheMostNumber)
+			#print(Info)
+			if Result == {}:
+				Success = False
+				Reason = ErrorInfo["reason"]
+				ErrorID = ErrorInfo["code"]
+			elif Result["activityList"] == []:
+				Success = False
+				Reason = "未找到任何符合条件的活动！"
+				ErrorID = Constants.ERROR_CODE_RECOMMEND
+		except:
+			Success = False
+			Reason = "搜索活动失败！"
+			ErrorID = Constants.ERROR_CODE_UNKNOWN
 
-    if Success:
-        Return = Result
-    else:
-        Return["errid"] = ErrorID
-        Return["errmsg"] = Reason
-    Response = JsonResponse(Return)
-    if Success == True:
-        Response.status_code = 200
-    else:
-        Response.status_code = 400
-    return Response 
+	if Success:
+		Return = Result
+	else:
+		Return["errid"] = ErrorID
+		Return["errmsg"] = Reason
+	Response = JsonResponse(Return)
+	if Success == True:
+		Response.status_code = 200
+	else:
+		Response.status_code = 400
+	return Response 
 
 def RecommendActivityByActivity(request):
-    '''
-    描述：处理按照活动推荐请求
-    参数：request
-    成功返回活动列表
-    失败则是
-    {
-    "errid":xxx,
-    "errmsg":"xxxx"
-    }
-    '''
-    Success = True
-    Return = {}
-    Info = {}
-    ErrorInfo = {}
-    Reason = ""
-    ErrorID = Constants.UNDEFINED_NUMBER
-    TheSession = ""
-    TheUserID = ""
-    SearchWord = ""
-    TheActivityID = 0
-    Most = Constants.UNDEFINED_NUMBER
-    #获取请求数据
-    if Success:
-        try:
-            TheSession = request.GET.get("session")
-            TheActivityID = request.GET.get("activityId")
-            Most = int(request.GET.get("most"))
-        except:
-            Success = False
-            Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
-    
-    #判断是否登录，获取待查询的openid
-    if Success:
-        try:
-            TheUserID = UserManager.GetCurrentUser(TheSession)
-            if TheUserID == None:
-                Success = False
-                Reason = "用户未登录！"
-                ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
-        except:
-            Success = False
-            Reason = "用户未登录！"
-            ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+	'''
+	描述：处理按照活动推荐请求
+	参数：request
+	成功返回活动列表
+	失败则是
+	{
+	"errid":xxx,
+	"errmsg":"xxxx"
+	}
+	'''
+	Success = True
+	Return = {}
+	Info = {}
+	ErrorInfo = {}
+	Reason = ""
+	ErrorID = Constants.UNDEFINED_NUMBER
+	TheSession = ""
+	TheUserID = ""
+	SearchWord = ""
+	TheActivityID = 0
+	Most = Constants.UNDEFINED_NUMBER
+	#获取请求数据
+	if Success:
+		try:
+			TheSession = request.GET.get("session")
+			TheActivityID = request.GET.get("activityId")
+			Most = int(request.GET.get("most"))
+		except:
+			Success = False
+			Reason = "请求参数不合法！"
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+	
+	#判断是否登录，获取待查询的openid
+	if Success:
+		try:
+			TheUserID = UserManager.GetCurrentUser(TheSession)
+			if TheUserID == None:
+				Success = False
+				Reason = "用户未登录！"
+				ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+		except:
+			Success = False
+			Reason = "用户未登录！"
+			ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
 
-    #调用数据库函数
-    if Success:
-        try:
-            Info, ErrorInfo = SearchAndRecommend.RecommendActivityByActivity(TheUserID, TheActivityID)
-            #print(Info)
-            if Info == {}:
-                Success = False
-                Reason = ErrorInfo["reason"]
-                ErrorID = ErrorInfo["code"]
-            else:
-                Info["activityList"] = SearchAndRecommend.ShowRandomInfo(Info["activityList"], Most)
-        except:
-            Success = False
-            Reason = "推荐活动失败！"
-            ErrorID = Constants.ERROR_CODE_NOT_FOUND
+	#调用数据库函数
+	if Success:
+		try:
+			Info, ErrorInfo = SearchAndRecommend.RecommendActivityByActivity(TheUserID, TheActivityID)
+			#print(Info)
+			if Info == {}:
+				Success = False
+				Reason = ErrorInfo["reason"]
+				ErrorID = ErrorInfo["code"]
+			else:
+				Info["activityList"] = SearchAndRecommend.ShowRandomInfo(Info["activityList"], Most)
+		except:
+			Success = False
+			Reason = "推荐活动失败！"
+			ErrorID = Constants.ERROR_CODE_NOT_FOUND
 
 
-    if Success:
-        Return = Info
-    else:
-        Return["errid"] = ErrorID
-        Return["errmsg"] = Reason
-    Response = JsonResponse(Return)
-    if Success == True:
-        Response.status_code = 200
-    else:
-        Response.status_code = 400
-    return Response 
+	if Success:
+		Return = Info
+	else:
+		Return["errid"] = ErrorID
+		Return["errmsg"] = Reason
+	Response = JsonResponse(Return)
+	if Success == True:
+		Response.status_code = 200
+	else:
+		Response.status_code = 400
+	return Response 
 
 def RecommendActivityByUser(request):
-    '''
-    描述：处理按照用户推荐请求
-    参数：request
-    成功返回活动列表
-    失败则是
-    {
-    "errid":xxx,
-    "errmsg":"xxxx"
-    }
-    '''
-    Success = True
-    Return = {}
-    Info = {}
-    ErrorInfo = {}
-    Reason = ""
-    ErrorID = Cons = ""
-    TheUserID = ""
-    SearchWord = ""
-    Most = Constants.UNDEFINED_NUMBER
+	'''
+	描述：处理按照用户推荐请求
+	参数：request
+	成功返回活动列表
+	失败则是
+	{
+	"errid":xxx,
+	"errmsg":"xxxx"
+	}
+	'''
+	Success = True
+	Return = {}
+	Info = {}
+	ErrorInfo = {}
+	Reason = ""
+	ErrorID = Cons = ""
+	TheUserID = ""
+	SearchWord = ""
+	Most = Constants.UNDEFINED_NUMBER
 
-    #获取请求数据
-    if Success:
-        try:
-            TheSession = request.GET.get("session")
-            Most = int(request.GET.get("most"))
-        except:
-            Success = False
-            Reason = "请求参数不合法！"
-            Code = Constants.ERROR_CODE_INVALID_PARAMETER
-    
-    #判断是否登录，获取待查询的openid
-    if Success:
-        try:
-            TheUserID = UserManager.GetCurrentUser(TheSession)
-            if TheUserID == None:
-                Success = False
-                Reason = "用户未登录！"
-                ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
-        except:
-            Success = False
-            Reason = "用户未登录！"
-            ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+	#获取请求数据
+	if Success:
+		try:
+			TheSession = request.GET.get("session")
+			Most = int(request.GET.get("most"))
+		except:
+			Success = False
+			Reason = "请求参数不合法！"
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+	
+	#判断是否登录，获取待查询的openid
+	if Success:
+		try:
+			TheUserID = UserManager.GetCurrentUser(TheSession)
+			if TheUserID == None:
+				Success = False
+				Reason = "用户未登录！"
+				ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
+		except:
+			Success = False
+			Reason = "用户未登录！"
+			ErrorID = Constants.ERROR_CODE_LOGIN_ERROR
 
-    #调用数据库函数
-    if Success:
-        try:
-            Info, ErrorInfo = SearchAndRecommend.RecommendActivityByUser(TheUserID)
-            #print(Info)
-            if Info == {}:
-                Success = False
-                Reason = ErrorInfo["reason"]
-                ErrorID = ErrorInfo["code"]
-            else:
-                Info["activityList"] = SearchAndRecommend.ShowRandomInfo(Info["activityList"], Most)
-        except:
-            Success = False
-            Reason = "推荐活动失败！"
-            ErrorID = Constants.ERROR_CODE_NOT_FOUND
+	#调用数据库函数
+	if Success:
+		try:
+			Info, ErrorInfo = SearchAndRecommend.RecommendActivityByUser(TheUserID)
+			#print(Info)
+			if Info == {}:
+				Success = False
+				Reason = ErrorInfo["reason"]
+				ErrorID = ErrorInfo["code"]
+			else:
+				Info["activityList"] = SearchAndRecommend.ShowRandomInfo(Info["activityList"], Most)
+		except:
+			Success = False
+			Reason = "推荐活动失败！"
+			ErrorID = Constants.ERROR_CODE_NOT_FOUND
 
 
 
-    if Success:
-        Return = Info
-    else:
-        Return["errid"] = ErrorID
-        Return["errmsg"] = Reason
-    Response = JsonResponse(Return)
-    if Success == True:
-        Response.status_code = 200
-    else:
-        Response.status_code = 400
-    return Response 
+	if Success:
+		Return = Info
+	else:
+		Return["errid"] = ErrorID
+		Return["errmsg"] = Reason
+	Response = JsonResponse(Return)
+	if Success == True:
+		Response.status_code = 200
+	else:
+		Response.status_code = 400
+	return Response 

@@ -481,6 +481,12 @@ def JudgeActivityTypeMatch(FatherType, SonType):
 		return True
 	return False
 
+def JudgeRuleTypeValid(TheType):
+	if TheType in [Constants.ADVANCED_RULE_ACCEPT, Constants.ADVANCED_RULE_AUDIT, Constants.ADVANCED_RULE_REJECT]:
+		return True
+	else:
+		return False
+
 #高级报名合理性判断
 def JudgeSingleRuleValid(TheRule):
 	'''
