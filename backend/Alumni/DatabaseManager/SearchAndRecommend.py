@@ -138,6 +138,8 @@ class WhooshSearcher:
 		IDList = []
 		InfoNum = 0
 		for i in range(len(TheAndResult)):
+			if i >= 10:
+				break
 			hit = TheAndResult[i]
 			TheInfo = {}
 			TheNumberID = int(hit["path"][1:])
@@ -151,8 +153,11 @@ class WhooshSearcher:
 		ParsedKeyword = self.OrParser.parse(TheKeyWord)
 		#print(ParsedKeyword)
 		TheOrResult = Searcher.search(ParsedKeyword)
+		print(1)
 		#print(TheOrResult)
 		for i in range(len(TheOrResult)):
+			if i >= 10:
+				break
 			hit = TheOrResult[i]
 			TheInfo = {}
 			TheNumberID = int(hit["path"][1:])
@@ -168,6 +173,8 @@ class WhooshSearcher:
 		if len(TheInfoList) == 0:
 			TheInfoList = self.SearchBruteForce(TheKeyWord)
 		#分页显示
+		print(1)
+
 		CurrentNum = 0
 		WhetherFindStart = False
 		if TheLastSeenID == Constants.UNDEFINED_NUMBER:
@@ -233,6 +240,8 @@ class WhooshSearcher:
 		TheOrResult = Searcher.search(ParsedKeyword)
 		InfoNum = 0
 		for i in range(len(TheOrResult)):
+			if i >= 10:
+				break
 			hit = TheOrResult[i]
 			TheInfo = {}
 			TheNumberID = int(hit["path"][1:])

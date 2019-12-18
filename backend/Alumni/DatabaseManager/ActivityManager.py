@@ -154,6 +154,10 @@ def AddActivity(ID, Information):
 		try:
 		#判断是否合法
 			TheGlobalRule = Information["rules"]["ruleType"]
+			if JudgeValid.JudgeRuleTypeValid(TheGlobalRule) != True:
+				Success = False
+				Reason = "参数不合法，规则类型不合法！"
+				Code = Constants.ERROR_CODE_INVALID_PARAMETER
 			TheJudgeAdvanceRuleResult = JudgeValid.JudgeAdvancedRuleValid(Information["rules"])
 			#print(TheJudgeAdvanceRuleResult)
 			if TheJudgeAdvanceRuleResult["result"] != "success": 
@@ -786,6 +790,10 @@ def ChangeActivity(TheUserID, Information):
 				Success = False
 				Reason = "待修改的活动签到状态不合法"	
 				Code = Constants.ERROR_CODE_INVALID_PARAMETER	
+			if JudgeValid.JudgeRuleTypeValid(ChangeDictionary["ruleType"]) != True:
+				Success = False
+				Reason = "待修改的活动规则类型不合法！"
+				Code = Constants.ERROR_CODE_INVALID_PARAMETER
 		except:
 			Success = False
 			Reason = "待修改数据格式不合法"	
