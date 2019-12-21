@@ -73,7 +73,7 @@ from Alumni.RequestHandler import AdminHandler
 TheSearcher = SearchAndRecommend.WhooshSearcher.Create()
 print(GlobalFunctions.SetAccessToken())
 print(GlobalFunctions.GetAccessToken())
-#AdminManager.AddAdmin("kebab","reich")
+AdminManager.AddAdmin("kebab","reich")
 
 
 urlpatterns = [
@@ -83,6 +83,7 @@ urlpatterns = [
     url(r'^qhrcallback$', UserHandler.ReceiveAlunmiInfo),
     url(r'^userData$', UserHandler.QueryUser),
     url(r'^setAvatarUrl$', UserHandler.SetAvatarURL),
+    url(r'^setExtraData$', UserHandler.SetExtraData),
 
     #处理活动请求url
     url(r'^createActivity$', ActivityHandler.StartActivity),
@@ -126,15 +127,11 @@ urlpatterns = [
     url(r'^adminLogin$', AdminHandler.Login),
     url(r'^adminLogout$', AdminHandler.Logout),
     url(r'^adminGetAllActivity$', AdminHandler.ShowAllActivity),
-    url(r'^adminGetReportList$', AdminHandler.ShowAllReport),
     url(r'^adminModifyActivityStatus$', AdminHandler.ChangeActivityStatus),
     url(r'^adminGetActivityInfo$', AdminHandler.ShowOneActivity),
-    url(r'^adminGetActivityReportList$', AdminHandler.ShowAllActivityReport),
-    url(r'^adminDeleteOneReport$', AdminHandler.DeleteOneReport),
-    url(r'^adminDeleteActivityReport$', AdminHandler.DeleteActivityReport),
     url(r'^adminGetAllUser$', AdminHandler.ShowAllUser),
-    url(r'^adminUserData$', AdminHandler.ShowOneUser),
     url(r'^adminModifyUser$', AdminHandler.ChangeUserStatus),
+    url(r'^adminModifyUserPoint$', AdminHandler.ChangeUserPoint),
 
     #测试url
     url(r'^testt$', TimeManager.Testt)

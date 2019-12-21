@@ -1,5 +1,5 @@
 from django.db import models
- 
+
  
 class GlobalVariables(models.Model):
     AppId = models.CharField(max_length = 100)
@@ -17,6 +17,8 @@ class User(models.Model):
     AvatarURL = models.CharField(max_length = 300)
     Valid = models.BooleanField(default = False)
     Status = models.BooleanField(default = True)
+    Point = models.IntegerField(default = 100)
+    ExtraData = models.CharField(max_length = 200, default = '')
 
 class Admin(models.Model):
     ID = models.AutoField(primary_key = True)
@@ -69,6 +71,7 @@ class Activity(models.Model):
     ImageURL = models.CharField(max_length = 300)
     Description = models.TextField()
     Code = models.CharField(max_length = 100, default = "UNDEFINED")
+    GPSPlace = models.CharField(max_length = 100, default = '')
 
 class AdvancedRule(models.Model):
     RULE_TYPE = (

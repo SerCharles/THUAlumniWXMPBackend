@@ -12,7 +12,7 @@ if __name__ == "__main__":
     Place = "http://thalu.starrah.cn"
 
     #本地版本
-    #Place = "http://127.0.0.1:8080"
+    #Place = "http://127.0.0.1:8082"
 
 
     URL = "changeActivityByTime"

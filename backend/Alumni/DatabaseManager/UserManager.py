@@ -290,9 +290,10 @@ def QueryUser(ID):
 			Result["name"] = Object.Name
 			Result["avatarUrl"]	= GlobalFunctions.GetTrueAvatarUrlUser(Object.AvatarURL)
 			Result["status"] = Object.Status
+			Result["point"] = Object.Point
 		except:
 			Success = False
-	
+
 	#处理教育信息数据
 	if Success:
 		try:
@@ -318,7 +319,7 @@ def QueryEducation(Info):
 		try:
 			for item in Info:
 				OneResult = {}
-				OneResult["enrollmentYear"] = str(item.StartYear)
+				OneResult["enrollmentYear"] = item.StartYear
 				OneResult["department"] = item.Department
 				OneResult["enrollmentType"] = item.Type
 				#print(OneResult)
@@ -328,3 +329,54 @@ def QueryEducation(Info):
 	if Success == False:
 		Result = []
 	return Result
+
+def GetUserExtraData(TheSelfID, TheUserID, TheActivityID):
+	'''
+	描述：查询用户的补充信息
+	参数：自身openid，用户openid，活动id
+	返回：符合条件带extraData，不符合条件或者失败是空字典
+	'''
+	Return = {}
+	try:
+		TheUser = User.objects.get(OpenID = TheUserID)
+		if TheSelfID == TheUserID:
+			Return["extraData"] = TheUser.ExtraData
+		else:
+			TheActivity = Activity.objects.get(ID = TheActivityID)
+			if JudgeValid.JudgeWhetherManager(TheSelfID, TheActivityID):
+				Return["extraData"] = TheUser.ExtraData
+	except:
+		pass
+	return Return
+
+def SetUserExtraData(TheUserID, TheInformation):
+	'''
+	描述：设置补充信息
+	参数：自身openid, 请求字典
+	返回：{result：success/fail} 
+	'''
+	Return = {}
+	Success = True
+	Reason = ''
+	Code = 0
+	try:
+		TheUser = User.objects.get(OpenID = TheUserID)
+		if "extraData" in TheInformation:
+			TheExtraData = TheInformation["extraData"]
+		else:
+			Success = False
+			Reason = "请求参数不合法！"
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+		TheUser.ExtraData = TheExtraData
+		TheUser.save()
+	except:
+		Success = False
+		Reason = "设置补充信息失败！"
+		Code = Constants.ERROR_CODE_UNKNOWN
+	if Success:
+		Return["result"] = "success"
+	else:
+		Return["result"] = "fail"
+		Return["reason"] = Reason
+		Return["code"] = Code
+	return Return
