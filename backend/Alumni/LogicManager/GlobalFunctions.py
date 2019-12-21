@@ -499,5 +499,47 @@ def GenerateQRCode(TheActivityID, TheCode):
 	TheImage.save(TheFileName)
 	return TheFileName
 
+#报名活动的相关函数
+def GetStartActivityGlobalStatus(ActivityType):
+	'''
+	描述：获取活动创建时的全局状态
+	参数：活动类型
+	返回：报名开始的状态
+	'''
+	TheGlobalType = ActivityType.split('-')[0]
+	if TheGlobalType == "官方活动":
+		return Constants.ACTIVITY_STATUS_GLOBAL_AUDIT
+	else:
+		return Constants.ACTIVITY_STATUS_GLOBAL_NORMAL
+	
+
+def GetStartActivityJoinStatus(JoinStartTime, JoinEndTime):
+	'''
+	描述：获取活动创建时的报名状态
+	参数：报名开始时间和结束时间
+	返回：报名开始的状态
+	'''
+	CurrentTime = GetCurrentTime()
+	if CurrentTime < JoinStartTime:
+		return Constants.ACTIVITY_STATUS_JOIN_BEFORE
+	elif CurrentTime <= JoinEndTime:
+		return Constants.ACTIVITY_STATUS_JOIN_CONTINUE
+	else:
+		return Constants.ACTIVITY_STATUS_JOIN_STOPPED
+
+def GetStartActivityCheckStatus(CheckStartTime, CheckEndTime):
+	'''
+	描述：获取活动创建时的签到状态
+	参数：签到开始时间和结束时间
+	返回：签到开始的状态
+	'''
+	CurrentTime = GetCurrentTime()
+	if CurrentTime < CheckStartTime:
+		return Constants.ACTIVITY_STATUS_CHECK_BEFORE
+	elif CurrentTime <= CheckEndTime:
+		return Constants.ACTIVITY_STATUS_CHECK_CONTINUE
+	else:
+		return Constants.ACTIVITY_STATUS_CHECK_STOPPED	
+
 
 	

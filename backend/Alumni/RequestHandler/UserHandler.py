@@ -355,6 +355,86 @@ def SetAvatarURL(request):
         Response.status_code = 400
     return Response 
 
+def SetExtraData(request):
+    '''
+    描述：处理设置用户补充信息请求
+    参数：request
+    成功返回：
+    {
+    “result”：“success”
+    }
+    失败返回：
+    {"errid": 101, "errmsg": "身份信息不存在"}
+    '''
+    Success = True
+    Return = {}
+    Info = {}
+    RequestBody = {}
+    ErrorId = Constants.UNDEFINED_NUMBER
+    Reason = ""
+    TheSession = ""
+    SelfOpenID = ""
+    TheURL = ""
+    #获取请求数据
+    if Success:
+        try:
+            TheSession = request.GET.get("session")
+        except:
+            Success = False
+            Reason = "请求参数不合法！"
+            ErrorId = Constants.ERROR_CODE_INVALID_PARAMETER
+    #判断是否登录，获取待查询的openid
+    if Success:
+        try:
+            SelfOpenID = UserManager.GetCurrentUser(TheSession)
+            if SelfOpenID == None:
+                Success = False
+                Reason = "用户未登录！"
+                ErrorId = Constants.ERROR_CODE_LOGIN_ERROR
+        except:
+            Success = False
+            Reason = "用户未登录！"
+            ErrorId = Constants.ERROR_CODE_LOGIN_ERROR
+
+    #判断是否被封禁
+    if Success:
+        JudgeResult = JudgeValid.JudgeUserValid(SelfOpenID)
+        if JudgeResult != True:
+            Success = False
+            Reason = "用户已被封禁，不能操作！！"
+            ErrorId = Constants.ERROR_CODE_INVALID_CHANGE
+
+    #调用数据库函数进行操作
+    if Success:
+        try:
+            RequestBody = json.loads(request.body)
+        except:
+            Success = False
+            Reason = "请求参数不合法！"
+            ErrorId = Constants.ERROR_CODE_INVALID_PARAMETER
+    if Success:
+        try:
+            QueryResult = UserManager.SetUserExtraData(SelfOpenID, RequestBody)
+            if QueryResult["result"] != "success":
+                Success = False
+                Reason = QueryResult["reason"]
+                ErrorId = QueryResult["code"]
+        except:
+            Success = False
+            Reason = "设置头像url失败！"
+            ErrorId = Constants.ERROR_CODE_UNKNOWN
+    if Success:
+        Return["result"] = "success"
+    else:
+        Return["errid"] = ErrorId
+        Return["errmsg"] = Reason
+    Response = JsonResponse(Return)
+    if Success == True:
+        Response.status_code = 200
+    else:
+        Response.status_code = 400
+    return Response 
+
 def QueryUser(request):
     '''
     描述：处理查询用户信息请求
@@ -381,11 +461,13 @@ def QueryUser(request):
     Success = True
     Return = {}
     Info = {}
+    ExtraInfo = {}
     ErrorId = Constants.UNDEFINED_NUMBER
     Reason = ""
     TheSession = ""
     SelfOpenID = ""
     TheOpenID = ""
+    TheActivityID = None
     #print(request.POST)
     #获取请求数据
     if Success:
@@ -418,6 +500,10 @@ def QueryUser(request):
                 TheOpenID = SelfOpenID
         except:
             TheOpenID = SelfOpenID
+        try:
+            TheActivityID = request.GET.get("activityId")
+        except:
+            TheActivityID = None
     
     #调用数据库函数查询信息
     #print(SelfOpenID)
@@ -437,6 +523,16 @@ def QueryUser(request):
             Success = False
             Reason = "身份信息不存在！"
             ErrorId = Constants.ERROR_CODE_NOT_FOUND
+    #查询补充信息
+    if Success:
+        try:
+            ExtraInfo = UserManager.GetUserExtraData(SelfOpenID, TheOpenID, TheActivityID)
+            if "extraData" in ExtraInfo:
+                Info["extraData"] = ExtraInfo["extraData"]
+        except:
+            Success = False
+            Reason = "查询用户信息失败！"
+            ErrorId = Constants.ERROR_CODE_UNKNOWN
 
     if Success == True:
         Return = Info    

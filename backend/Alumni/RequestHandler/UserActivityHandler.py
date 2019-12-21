@@ -731,7 +731,14 @@ def CheckInActivity(request):
         try:
             TheSession = request.GET.get("session")
             TheActivity = int(request.GET.get("activityId"))
-            TheCode = request.GET.get("code")
+            try:
+                TheCode = request.GET.get("code")
+            except:
+                TheCode = None
+            try:
+                TheDistance = int(request.GET.get("distance"))
+            except:
+                TheDistance = None
         except:
             Success = False
             Reason = "请求参数不合法！"
@@ -761,7 +768,7 @@ def CheckInActivity(request):
     #调用数据库函数添加活动
     if Success:
         try:
-            Info = UserActivityManager.CheckInActivity(TheUserID, TheActivity, TheCode)
+            Info = UserActivityManager.CheckInActivity(TheUserID, TheActivity, TheCode, TheDistance)
             #print(Info)
             if Info["result"] != "success":
                 Success = False

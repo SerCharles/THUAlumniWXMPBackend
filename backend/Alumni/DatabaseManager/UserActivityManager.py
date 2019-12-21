@@ -216,6 +216,7 @@ def ShowAllMembersAdmin(TheUserID, TheActivityID):
 				TheResult["avatarUrl"] = GlobalFunctions.GetTrueAvatarUrlUser(item.UserId.AvatarURL)
 				TheResult["selfStatus"] = item.Status
 				TheResult["selfRole"] = item.Role
+				TheResult["point"] = item.UserId.Point
 				TheResult["submitTime"] = GlobalFunctions.TimeStampToTimeString(item.SubmitTime)
 				if item.JoinTime != Constants.UNDEFINED_NUMBER:
 					TheResult["joinTime"] = GlobalFunctions.TimeStampToTimeString(item.JoinTime)
@@ -286,6 +287,7 @@ def ShowAllAuditMembers(TheUserID, TheActivityID):
 					TheResult["name"] = item.UserId.Name
 					TheResult["avatarUrl"] = GlobalFunctions.GetTrueAvatarUrlUser(item.UserId.AvatarURL)
 					TheResult["submitTime"] = GlobalFunctions.TimeStampToTimeString(item.SubmitTime)
+					TheResult["point"] = item.UserId.Point
 					TheResult["submitMsg"] = item.JoinReason
 					ResultList.append(TheResult)
 		except:
@@ -764,10 +766,10 @@ def RemoveUser(TheManagerID, TheUserID, TheActivityID):
 		Return["code"] = Code
 	return Return
 
-def CheckInActivity(TheUserID, TheActivityID, TheCode):
+def CheckInActivity(TheUserID, TheActivityID, TheCode, TheDistance):
 	'''
 	描述：用户签到
-	参数：用户openid，活动id,二维码code
+	参数：用户openid，活动id,二维码code, 距离
 	返回：成功{result：success}
 		 失败：{result：fail，reason：xxx，code：xxx}
 	'''
@@ -781,10 +783,21 @@ def CheckInActivity(TheUserID, TheActivityID, TheCode):
 		try:
 			TheActivity = Activity.objects.get(ID = TheActivityID)
 			TheUser = User.objects.get(OpenID = TheUserID)
-			if TheCode != TheActivity.Code:
+
+			if TheCode != None:
+				if TheCode != TheActivity.Code:
+					Success = False
+					Reason = "二维码和活动不匹配！"
+					Code = Constants.ERROR_CODE_INVALID_CHANGE
+			elif TheDistance != None:
+				if TheDistance > Constants.SUCCESS_THRESHOLD:
+					Success = False
+					Reason = "距离太远，签到失败！"
+					Code = Constants.ERROR_CODE_INVALID_CHANGE
+			else:
 				Success = False
-				Reason = "二维码和活动不匹配！"
-				Code = Constants.ERROR_CODE_INVALID_CHANGE
+				Reason = "请求参数不合法！"
+				Code = Constants.ERROR_CODE_INVALID_PARAMETER
 		except:
 			Success = False
 			Reason = "未找到用户或活动！"

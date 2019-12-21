@@ -103,7 +103,8 @@ def JudgeActivityCanBeSearched(TheActivityID):
 	'''
 	try:
 		TheActivity = Activity.objects.get(ID = TheActivityID)
-		if TheActivity.CanBeSearched == True and TheActivity.StatusGlobal != Constants.ACTIVITY_STATUS_GLOBAL_EXCEPT:
+		if TheActivity.CanBeSearched == True and (TheActivity.StatusGlobal == Constants.ACTIVITY_STATUS_GLOBAL_NORMAL\
+		or TheActivity.StatusGlobal == Constants.ACTIVITY_STATUS_GLOBAL_FINISH):
 			return True
 		else:
 			return False
@@ -120,7 +121,8 @@ def JudgeActivityNormal(TheActivityID):
 	if Success:
 		try:
 			TheActivity = Activity.objects.get(ID = TheActivityID)
-			if TheActivity.StatusGlobal == Constants.ACTIVITY_STATUS_GLOBAL_NORMAL:
+			if TheActivity.StatusGlobal == Constants.ACTIVITY_STATUS_GLOBAL_NORMAL\
+			or TheActivity.StatusGlobal == Constants.ACTIVITY_STATUS_GLOBAL_AUDIT:
 				Success = True
 			else:
 				Success = False
@@ -181,6 +183,10 @@ def JudgeActivityStatusChangeValid(OldStatus, NewStatus):
 	if Success:
 		if OldStatus == Constants.ACTIVITY_STATUS_GLOBAL_NORMAL and NewStatus == Constants.ACTIVITY_STATUS_GLOBAL_NORMAL:
 			Success = True
+		elif OldStatus == Constants.ACTIVITY_STATUS_GLOBAL_AUDIT and NewStatus == Constants.ACTIVITY_STATUS_GLOBAL_AUDIT:
+			Success = True
+		elif OldStatus == Constants.ACTIVITY_STATUS_GLOBAL_FINISH and NewStatus == Constants.ACTIVITY_STATUS_GLOBAL_FINISH:
+			Success = True
 		else:
 			Success = False
 			Reason = "状态修改不合法，用户只能在活动正常状态间修改活动状态"
@@ -198,7 +204,7 @@ def JudgeActivityStatusGlobalValid(TheStatus):
 	返回：非法False，合法True
 	'''
 	if TheStatus in [Constants.ACTIVITY_STATUS_GLOBAL_EXCEPT, Constants.ACTIVITY_STATUS_GLOBAL_FINISH, \
-	Constants.ACTIVITY_STATUS_GLOBAL_NORMAL]:
+	Constants.ACTIVITY_STATUS_GLOBAL_NORMAL, Constants.ACTIVITY_STATUS_GLOBAL_AUDIT]:
 		return True
 	else:
 		return False
@@ -433,7 +439,6 @@ def JudgeSearchTimeValid(StartTime, EndTime):
 	描述：判断一个高级搜索的活动时间是否合理
 	参数：开始,结束时间
 	返回：{result：success}/失败{result：fail，reason：xxx}
-	合理：
 	'''
 	Success = True
 	Reason = ""
@@ -463,6 +468,52 @@ def JudgeTagListValid(TheList):
 			if one == ',':
 				return False
 	return True
+
+def JudgeTypeChangeValid(OriginalType, NewType, TheStatusGlobal):
+	'''
+	描述：判断活动类型修改是否合理
+	参数：原类型，新类型
+	返回：{result：success}/失败{result：fail，reason：xxx, code:xxx}
+	'''
+	Success = True
+	Reason = ""
+	Code = 0
+	Return = {}
+	if Success:
+		try:
+			if JudgeActivityTypeValid(OriginalType) != True or JudgeActivityTypeValid(NewType) != True:
+				Success = False
+				Code = Constants.ERROR_CODE_INVALID_PARAMETER
+				Reason = "活动类型不合法！"
+		except:
+			Success = False
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+			Reason = "活动类型不合法！"
+	if Success:
+		try:
+			OriginalGlobalType = OriginalType.split('-')[0]
+			NewGlobalType = NewType.split('-')[0]
+			if TheStatusGlobal == Constants.ACTIVITY_STATUS_GLOBAL_NORMAL or \
+			TheStatusGlobal == Constants.ACTIVITY_STATUS_GLOBAL_FINISH:
+				if OriginalGlobalType == '官方活动' and NewGlobalType != '官方活动':
+					Success = False
+					Code = Constants.ERROR_CODE_INVALID_CHANGE
+					Reason = "不能将通过审核的官方活动修改为非官方活动！"
+				elif OriginalGlobalType != '官方活动' and NewGlobalType == '官方活动':
+					Success = False
+					Code = Constants.ERROR_CODE_INVALID_CHANGE
+					Reason = "不能将通过审核的非官方活动修改为官方活动！"
+		except:
+			Success = False
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+			Reason = "活动类型不合法！"
+	if Success:
+		Return["result"] = "success"
+	else:
+		Return["result"] = "fail"
+		Return["reason"] = Reason
+		Return["code"] = Code
+	return Return
 
 def JudgeActivityTypeMatch(FatherType, SonType):
 	'''

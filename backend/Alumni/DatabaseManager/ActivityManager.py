@@ -86,7 +86,11 @@ def AddActivity(ID, Information):
 			if "imageUrl" in Information:
 				TheImageURL = Information["imageUrl"]
 			else:
-				TheImageURL = "UNDEFINED"		
+				TheImageURL = "UNDEFINED"	
+			if "position" in Information:
+				ThePosition = Information["position"]
+			else:
+				ThePosition = ""	
 			if JudgeResult["result"] != "success":
 				Success = False
 				Reason = JudgeResult["reason"]
@@ -100,39 +104,19 @@ def AddActivity(ID, Information):
 	#判断活动状态，类型等是否合法
 	if Success:
 		try:
-			TheStatusGlobal = int(Information["statusGlobal"])
-			TheStatusJoin = int(Information["statusJoin"])
-			TheStatusCheck = int(Information["statusCheck"])
-
-			TheSearched = bool(Information["canBeSearched"])
-			if TheStatusGlobal != Constants.ACTIVITY_STATUS_GLOBAL_NORMAL:
-				Success = False
-				Reason = "活动状态必须是正常状态！" 
-				Code = Constants.ERROR_CODE_INVALID_CHANGE
-			if JudgeValid.JudgeActivityStatusJoinValid(TheStatusJoin) != True:
-				Success = False
-				Reason = "活动报名状态非法！" 
-				Code = Constants.ERROR_CODE_INVALID_PARAMETER
-			if JudgeValid.JudgeActivityStatusCheckValid(TheStatusCheck) != True:
-				Success = False
-				Reason = "活动报名状态非法！" 
-				Code = Constants.ERROR_CODE_INVALID_PARAMETER
-		except:
-			Success = False
-			Reason = "参数不合法，添加活动失败!"
-			Code = Constants.ERROR_CODE_INVALID_PARAMETER
-	if Success:
-		try:
 			TheType = Information["type"]
+			TheSearched = bool(Information["canBeSearched"])
 			if JudgeValid.JudgeActivityTypeValid(TheType) == False:
 				Success = False
 				Reason = "活动类型不合法，添加活动失败!"
-				Code = Constants.ERROR_CODE_INVALID_PARAMETER			
+				Code = Constants.ERROR_CODE_INVALID_PARAMETER	
+			TheStatusGlobal = GlobalFunctions.GetStartActivityGlobalStatus(TheType)
+			TheStatusJoin = GlobalFunctions.GetStartActivityJoinStatus(StartSignTime, StopSignTime)
+			TheStatusCheck = GlobalFunctions.GetStartActivityCheckStatus(StartTime, EndTime)
 		except:
 			Success = False
 			Reason = "参数不合法，添加活动失败!"
 			Code = Constants.ERROR_CODE_INVALID_PARAMETER
-
 
 	#获得标签,正文,头像
 	if Success:
@@ -195,7 +179,7 @@ def AddActivity(ID, Information):
 			NewActivity = Activity.objects.create(Name = TheName, Place = ThePlace, CreateTime = TheCreateTime, StartTime = StartTime, EndTime = EndTime, SignUpStartTime = StartSignTime,\
 			SignUpEndTime = StopSignTime, MinUser = TheMinUser, MaxUser = TheMaxUser, CurrentUser = 0, Type = TheType, \
 			StatusGlobal = TheStatusGlobal, StatusJoin = TheStatusJoin, StatusCheck = TheStatusCheck, CanBeSearched = TheSearched, \
-			GlobalRule = TheGlobalRule, Tags = TheTags, Description = TheDescription, ImageURL = TheImageURL)
+			GlobalRule = TheGlobalRule, Tags = TheTags, Description = TheDescription, ImageURL = TheImageURL, GPSPlace = ThePosition)
 			NewActivity.save()
 			ActivityID = NewActivity.ID
 
@@ -236,7 +220,10 @@ def AddActivity(ID, Information):
 			Reason = "添加活动失败"
 			Code = Constants.ERROR_CODE_UNKNOWN
 	if Success:
-		Return["result"] = "success"
+		if TheStatusGlobal == Constants.ACTIVITY_STATUS_GLOBAL_NORMAL:
+			Return["result"] = "success"
+		else:
+			Return["result"] = "needAudit"
 	else:
 		Return["result"] = "fail"
 		Return["reason"] = Reason
@@ -444,6 +431,7 @@ def ShowOneActivity(TheUserID, TheActivityID):
 	if Success:
 		try:
 			Result["canBeSearched"] = TheActivity.CanBeSearched
+			Result["position"] = TheActivity.GPSPlace
 			TheJoinActivityList = JoinInformation.objects.filter(ActivityId = TheActivity)
 			Result["participants"] = []
 			NumberNeedAudit = 0
@@ -455,6 +443,7 @@ def ShowOneActivity(TheUserID, TheActivityID):
 				TheUserInfo["name"] = item.UserId.Name
 				TheUserInfo["avatarUrl"] = item.UserId.AvatarURL
 				TheUserInfo["userStatus"] = TheStatus
+				TheUserInfo["point"] = item.UserId.Point
 				if TheStatus == Constants.USER_STATUS_WAITVALIDATE:
 					NumberNeedAudit = NumberNeedAudit + 1
 				TheUserInfo["userRole"] = item.Role
@@ -722,6 +711,10 @@ def ChangeActivity(TheUserID, Information):
 				ChangeDictionary["imageUrl"] = Information["imageUrl"]
 			else:
 				ChangeDictionary["imageUrl"] = TheActivity.ImageURL
+			if "position" in Information:
+				ChangeDictionary["position"] = Information["position"]
+			else:
+				ChangeDictionary["position"] = TheActivity.GPSPlace
 
 			if "tags" in Information:
 				if JudgeValid.JudgeTagListValid(Information["tags"]) != True:
@@ -752,10 +745,11 @@ def ChangeActivity(TheUserID, Information):
 	#判断活动type修改后是否有效
 	if Success:
 		try:
-			if JudgeValid.JudgeActivityTypeValid(ChangeDictionary["type"]) != True:
+			JudgeResult = JudgeValid.JudgeTypeChangeValid(TheActivity.Type, ChangeDictionary["type"], TheActivity.StatusGlobal)
+			if JudgeResult["result"] != "success":
 				Success = False
-				Reason = "活动类型不合法"			
-				Code = Constants.ERROR_CODE_INVALID_PARAMETER
+				Reason = JudgeResult["reason"]
+				Code = JudgeResult["code"]
 		except:
 			Success = False
 			Reason = "待修改数据格式不合法"			
@@ -769,6 +763,20 @@ def ChangeActivity(TheUserID, Information):
 			if JudgeResult["result"] != "success":
 				Success = False
 				Reason = JudgeResult["reason"]
+				Code = Constants.ERROR_CODE_INVALID_CHANGE
+		except:
+			Success = False
+			Reason = "待修改数据格式不合法"			
+			Code = Constants.ERROR_CODE_INVALID_PARAMETER
+	if Success and ChangeDictionary["maxUser"] != Constants.UNDEFINED_NUMBER:
+		try:
+			if ChangeDictionary["minUser"] > ChangeDictionary["maxUser"]:
+				Success = False
+				Reason = "最小人数不能大于最大人数！"
+				Code = Constants.ERROR_CODE_INVALID_CHANGE
+			if ChangeDictionary["curUser"] > ChangeDictionary["maxUser"]:
+				Success = False
+				Reason = "当前人数不能大于最大人数！"
 				Code = Constants.ERROR_CODE_INVALID_CHANGE
 		except:
 			Success = False
@@ -831,6 +839,7 @@ def ChangeActivity(TheUserID, Information):
 			TheActivity.GlobalRule = ChangeDictionary["ruleType"]
 			TheActivity.Tags = ChangeDictionary["tags"]
 			TheActivity.ImageURL = ChangeDictionary["imageUrl"]
+			TheActivity.GPSPlace = ChangeDictionary["position"]
 			TheActivity.save()
 
 			TheSearcher = SearchAndRecommend.WhooshSearcher.Create()

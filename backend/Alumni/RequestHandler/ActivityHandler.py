@@ -93,8 +93,9 @@ def StartActivity(request):
             ErrorId = Constants.ERROR_CODE_INVALID_PARAMETER
 
     if Success:
-        if Info["result"] == "success":
+        if Info["result"] == "success" or Info["result"] == "needAudit":
             Return["activityId"] = str(Info["activityId"])
+            Return["result"] = Info["result"]
         else:
             if ErrorId == Constants.UNDEFINED_NUMBER:
                 Success = False
@@ -443,12 +444,13 @@ def ChangeActivity(request):
     ErrorID = Constants.UNDEFINED_NUMBER
     TheSession = ""
     TheUserID = ""
-    Data = json.loads(request.body)
+    Data = {}
     NeedPush = False
     #获取请求数据
     if Success:
         try:
             TheSession = request.GET.get("session")
+            Data = json.loads(request.body)
             try:
                 TheNeedPush = request.GET.get("needPush")
                 if int(TheNeedPush) > 0:
@@ -533,12 +535,13 @@ def ChangeActivityDetail(request):
     TheSession = ""
     TheActivity = 0
     TheUserID = ""
-    Data = json.loads(request.body)
+    Data = {}
     #获取请求数据
     if Success:
         try:
             TheSession = request.GET.get("session")
             TheActivity = int(request.GET.get("activityId"))
+            Data = json.loads(request.body)
         except:
             Success = False
             Reason = "请求参数不合法！"

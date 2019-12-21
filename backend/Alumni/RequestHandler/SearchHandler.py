@@ -133,13 +133,14 @@ def SearchActivityAdvanced(request):
 	TheSession = ""
 	TheUserID = ""
 	SearchWord = ""
-	Data = json.loads(request.body)
+	Data = {}
 	TheLastSeenID = Constants.UNDEFINED_NUMBER
 	TheMostNumber = Constants.UNDEFINED_NUMBER
 	#获取请求数据
 	if Success:
 		try:
 			TheSession = request.GET.get("session")
+			Data = json.loads(request.body)
 			try:
 				TheLastSeenID = int(request.GET.get("lastSeenId"))
 			except:
