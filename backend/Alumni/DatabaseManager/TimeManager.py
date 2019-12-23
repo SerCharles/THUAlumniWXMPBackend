@@ -192,6 +192,16 @@ def SendTimedMessage(TheActivityItem, TheUserItem, TheMessageType):
 				elif (TheMessageType == Constants.MESSAGE_TYPE_AUDIT_FAIL):
 					data["thing7"] = {"value": "如有疑问请联系活动主办方。"}
 					data["phrase1"] = {"value": "不通过"}
+			elif (TheMessageType == Constants.MESSAGE_TYPE_NEW_ACTIVITY_PASS or TheMessageType == Constants.MESSAGE_TYPE_NEW_ACTIVITY_FAIL):
+				obj["template_id"] = "j9EPrZx9MAQ5SjbN1aCYHImxymn6ZEziJLgQEcbuXSk"
+				data["thing2"] = {"value": TheActivityItem.Name}
+				data["date3"] = {"value": time.strftime("%Y{y}%m{m}%d{d} %H:%M", time.localtime(TheActivityItem.StartTime)).format(y='年', m='月', d='日')}
+				if(TheMessageType == Constants.MESSAGE_TYPE_NEW_ACTIVITY_PASS):
+					data["thing7"] = {"value": "校友总会已审核通过您发起的活动。"}
+					data["phrase1"] = {"value": "通过"}
+				elif (TheMessageType == Constants.MESSAGE_TYPE_NEW_ACTIVITY_FAIL):
+					data["thing7"] = {"value": "校友总会拒绝了您发起的活动。"}
+					data["phrase1"] = {"value": "不通过"}
 			elif (TheMessageType == Constants.MESSAGE_TYPE_ACTIVITY_WILL_START_HOUR):
 				obj["template_id"] = "u-UA76noUE9_9g2ZVX53W9DQKz3x-Tn1914KHphfRXM"
 				data["thing7"] = {"value": "您报名的活动将在明天举行，请合理安排行程"}
