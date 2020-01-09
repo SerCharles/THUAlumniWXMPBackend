@@ -20,9 +20,9 @@ typora-root-url: ./
 
 ```
 docker image build -t backend:1.0.0 .     
-docker container run --rm -p 8080:8080 --name backend -d -it backend:1.0.0 
+docker container run --rm -p 8080:8080 --name backend -d -it backend:1.0.0 /bin/bash
 docker attach backend
-/bin/bashpython manage.py runserver 0.0.0.0:8080
+python manage.py runserver 0.0.0.0:8080
 ```
 
 ### 1.2 定时更新脚本部署
