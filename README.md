@@ -43,9 +43,6 @@ nohup python3 UpdateDatabaseAuto.py
 docker image build -t xalumni:1.0.0 .
 docker container run --rm -p 8081:8081 --name admin -d -it xalumni:1.0.0 /bin/bash
 docker attach admin
-npm install
-npm run build
-npm install -g serve
 serve -s build -p 8081
 ```
 
