@@ -18,7 +18,7 @@ class User(models.Model):
     Valid = models.BooleanField(default = False)
     Status = models.BooleanField(default = True)
     Point = models.IntegerField(default = 100)
-    ExtraData = models.CharField(max_length = 200, default = '')
+    ExtraData = models.CharField(max_length = 400, default = '')
 
 class Admin(models.Model):
     ID = models.AutoField(primary_key = True)

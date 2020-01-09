@@ -143,6 +143,10 @@ def GetActivityList(request):
                 TheLastID = Constants.UNDEFINED_NUMBER
             try:
                 TheMostNumber = int(request.GET.get("most"))
+                if TheMostNumber <= 0:
+                    Success = False
+                    Reason = "请求参数不合法！"
+                    ErrorID = Constants.ERROR_CODE_INVALID_PARAMETER 
             except:
                 TheMostNumber = Constants.UNDEFINED_NUMBER
         except:
